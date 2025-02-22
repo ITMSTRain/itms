@@ -1,0 +1,390 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.main-container {
+  width: 70%;
+  margin: 0 auto; /* Center the container */
+  min-height: 100vh;
+  background-color: #ffffff;
+  box-shadow: -10px 0 15px rgba(0, 0, 0, 0.2), 10px 0 15px rgba(0, 0, 0, 0.2);
+  border-radius: 0;
+  padding: 20px; /* Padding for internal spacing */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  min-height: calc(100vh - 60px); /* Adjust to fit between header and footer */
+  margin-top: 0; /* Remove gap above */
+  margin-bottom: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #dbdbdb;
+  line-height: 1;
+  font-size: small;
+  height: 100%; /* Full height of the viewport */
+}
+
+
+/* Header Styling */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 15px;
+  background: linear-gradient(90deg, #747073, #3d3c3d);
+  color: white;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo Section */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-image {
+  width: 50px;
+  height: auto;
+}
+
+.logo-text {
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* User Menu */
+.user-menu {
+  position: relative;
+}
+
+.user-button {
+  background-color: white;
+  color: #2575fc;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.user-button:hover {
+  background-color: #2575fc;
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  background-color: white;
+  color: black;
+  padding: 10px 0; /* Space between items */
+  border-radius: 5px;
+  list-style: none;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  width: 160px; /* Adjust width as needed */
+}
+
+.dropdown.visible {
+  display: block;
+}
+
+.dropdown li {
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown li:hover {
+  background-color: #f0f0f0;
+}
+
+.dropdown a {
+  text-decoration: none;
+  color: black;
+  display: block;
+}
+
+
+/* Main Content Styling */
+.content {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px); /* Adjusted to fit within viewport */
+  padding: 10px; /* Reduced padding */
+  gap: 0; /* Removed unnecessary spacing between child elements */
+}
+
+.main-header {
+  margin-bottom: 5px; /* Reduce gap below the button bar */
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: #f9f9f9;
+  padding: 50px 10px; /* Added top padding to move content lower */
+  border-radius: 8px;
+  margin-top: 20px; 
+  margin-bottom: 20px;
+}
+
+/* Video Grid */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 columns in the grid */
+  gap: 5px; /* Reduce gap between videos */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  margin: 0 auto;
+  margin-top: 10px;
+}
+
+/* Each individual video item */
+.video-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  overflow: hidden;
+  width: 250px; /* Adjust width if needed */
+  height: 130px; /* Adjust height if needed */
+}
+
+/* Ensure videos fit nicely without stretching */
+.video-item img {
+  width: 100%; /* Fit full width of the container */
+  height: 100%; /* Fit full height of the container */
+  object-fit: cover; /* Cover the container without stretching */
+}
+@media (max-width: 768px) {
+  .main-container {
+    width: 80%;
+  }
+  .video-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .main-container {
+    width: 90%;
+  }
+  .video-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Button Bar */
+.button-bar button {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  transition: all 0.3s ease;
+  margin: 0 5px; /* Adjusted spacing between buttons */
+}
+
+.button-bar {
+  display: flex;
+  justify-content: space-between; /* Distribute space between button groups */
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #f4f4f4;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 0px;
+  margin-top: 30px;
+  border-radius: 8px;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px; /* Space between the four buttons */
+}
+/* Buttons */
+button {
+  padding: 8px 16px; /* Smaller padding for compact look */
+  font-size: 12px; /* Slightly smaller font */
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  transition: all 0.3s ease;
+  margin-right: 5px; /* Spacing between buttons */
+}
+
+button:hover {
+  background-color: #ccc;
+  color: #000;
+}
+
+/* Camera Dropdown */
+.camera-dropdown {
+  position: relative; /* Establishes a positioning context for the dropdown */
+}
+
+/* Adjust Dropdown Content */
+.camera-dropdown .dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%; /* Position right below the button */
+  left: 0; /* Aligns with the button */
+  background-color: white;
+  color: black;
+  padding: 10px 0;
+  border-radius: 5px;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  width: 160px; /* Adjust width to fit items */
+}
+
+.camera-dropdown .dropdown-content a {
+  padding: 10px 15px;
+  display: block;
+  text-decoration: none;
+  color: black;
+  transition: background-color 0.3s ease;
+}
+
+.camera-dropdown .dropdown-content a:hover {
+  background-color: #f0f0f0;
+}
+
+.camera-container {
+  display: flex;
+  align-items: center;
+}
+
+/* Popup Overlay */
+.popup-overlay {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Dark background */
+}
+
+/* Popup Video (Image) */
+.popup-video {
+  display: none;
+  position: fixed;
+  z-index: 1001;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #000;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  max-width: 80%; /* Maximum width of popup */
+  max-height: 80%; /* Maximum height of popup */
+  text-align: center;
+}
+
+.popup-video img {
+  width: 100%; /* Image will fit within the popup */
+  height: auto; /* Maintain aspect ratio */
+  border-radius: 8px;
+}
+
+.popup-modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Dark background */
+  justify-content: center;
+  align-items: center;
+}
+
+/* Pop-up Content */
+.popup-content {
+  background-color: #fff;
+  padding: 40px; /* Increased padding for larger content */
+  border-radius: 8px;
+  width: 80%; /* Increase the width to make it larger */
+  max-width: 800px; /* Set a max width to prevent it from being too large */
+  height: auto; /* Adjust height automatically based on content */
+  max-height: 80vh; /* Set a max height (80% of the viewport height) */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+
+/* Close Button */
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+  cursor: pointer;
+  color: #333;
+}
+
+.footer {
+  background: linear-gradient(90deg, #751212, #4d0b0b); /* Matching the header gradient color */
+  color: white;
+  text-align: center;
+  padding: 10px 0; /* Reduced padding to make the footer smaller */
+  position: relative;
+  bottom: 0;
+  width: 100%; /* Ensures the footer stretches across the entire width */
+  font-size: 0.9rem; /* Smaller font size for the text */
+  font-weight: normal; /* Lighter font weight */
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1); /* Optional: Subtle shadow to match the header */
+  margin: 0; /* Ensures no margin around the footer */
+}
+
+.footer p {
+  margin: 0;
+}
+
+.header,
+.footer {
+  width: 100%; /* Extend across the entire width */
+  position: fixed; /* Keep them in place */
+  left: 0;
+}
+
+.header {
+  top: 0;
+}
