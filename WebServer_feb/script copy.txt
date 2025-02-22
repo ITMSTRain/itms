@@ -1,0 +1,152 @@
+const body = document.querySelector('body'),
+  sidebar = body.querySelector('nav'),
+  toggle = body.querySelector(".toggle"),
+  modeSwitch = body.querySelector(".toggle-switch"),
+  modeText = body.querySelector(".mode-text"),
+  dropdownButton = document.getElementById('dropdownButton');
+surveillanceDropdownButton = document.getElementById('surveillanceDropdownButton');
+aboutBtn = document.querySelector('.about-btn');
+const singleVideoWrapper = document.getElementById('singleVideoWrapper');
+const multiVideoWrapper = document.getElementById('multiVideoWrapper');
+const videoStream = document.getElementById('video-stream'); // Single video stream
+const singleButton = document.getElementById('singleButton');
+const multiButton = document.getElementById('multiButton');
+const singleVideoStream = document.getElementById('singleVideoStream'); // Single video stream container
+const multiVideo1 = document.getElementById('multiVideo1'); // First video in multi-video
+const multiVideo2 = document.getElementById('multiVideo2'); // Second video in multi-video
+const surveillanceDropdown = document.querySelector(".dropdown-content");
+
+// Toggle sidebar visibility
+toggle.addEventListener("click", () => {
+  sidebar.classList.toggle("close");
+});
+
+// Toggle dropdown for Surveillance
+surveillanceDropdownButton.addEventListener('click', function(event) {
+  event.preventDefault(); // Prevent default link behavior
+  surveillanceDropdownButton.parentElement.classList.toggle('active');
+  updateAboutButtonPosition();
+});
+
+// Toggle dropdown for Analytics
+dropdownButton.addEventListener('click', function(event) {
+  event.preventDefault(); // Prevent default link behavior
+  dropdownButton.parentElement.classList.toggle('active');
+  updateAboutButtonPosition();
+});
+
+// Function to update the About button position
+function updateAboutButtonPosition() {
+  const surveillanceActive = surveillanceDropdownButton.parentElement.classList.contains('active');
+  const analyticsActive = dropdownButton.parentElement.classList.contains('active');
+
+  if (surveillanceActive && analyticsActive) {
+    aboutBtn.style.transform = 'translateY(265px)';
+  } else if (surveillanceActive) {
+    aboutBtn.style.transform = 'translateY(105px)';
+  } else if (analyticsActive) {
+    aboutBtn.style.transform = 'translateY(160px)';
+  } else {
+    aboutBtn.style.transform = 'translateY(0)';
+  }
+}
+
+// Event listener for Single button (to trigger single video stream)
+singleButton.addEventListener('click', function(event) {
+  event.preventDefault();
+  // Show single video stream and hide multi-video grid
+  singleVideoWrapper.style.display = 'block';
+  multiVideoWrapper.style.display = 'none';
+  singleVideoStream.style.display = 'block';
+
+  // Setup WebSocket connection for the single video stream
+  setupWebSocket();
+});
+
+// Event listener for Multi button (to show two video streams)
+multiButton.addEventListener('click', function(event) {
+  event.preventDefault();
+  // Hide single video stream and show multi-video grid
+  singleVideoWrapper.style.display = 'none';
+  multiVideoWrapper.style.display = 'grid';
+
+
+
+  // Setup WebSocket connection for multi-video streams
+  setupWebSocketForMultiStream();
+});
+
+// Function to change video source
+function changeVideoSource(videoSrc) {
+  const videoPlayer = document.getElementById('videoPlayer');
+  const source = videoPlayer.querySelector('source');
+  source.setAttribute('src', videoSrc);
+  videoPlayer.load();
+  videoPlayer.play();
+}
+
+// Automatically play the video when page loads
+window.addEventListener('load', function() {
+  const videoPlayer = document.getElementById('videoPlayer');
+  videoPlayer.muted = true;
+  videoPlayer.play();
+  videoPlayer.addEventListener('ended', function() {
+    videoPlayer.play(); // Replay the video automatically
+  });
+  videoPlayer.volume = 0.5; // Set volume to 50%
+});
+
+// WebSocket setup for single video stream
+function setupWebSocket() {
+  const ws = new WebSocket("ws://127.0.0.1:8000/ws1");
+  ws.onopen = function() {
+    console.log("WebSocket connection opened.");
+  };
+
+  ws.onmessage = async function(event) {
+    if (typeof event.data === "string") {
+      try {
+        const data = JSON.parse(event.data);
+        const objectId = data.id;
+        const speed = Math.round(data.speed);
+        const entryTime = data.entry_time;
+        const exitTime = data.exit_time;
+        document.getElementById('Speed_Info').innerHTML = `Vehicle ID: ${objectId} Speed: ${speed} km/h`;
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error);
+      }
+    } else if (event.data instanceof Blob) {
+      const blob = new Blob([event.data], { type: 'image/jpeg' });
+      const url = URL.createObjectURL(blob);
+      videoStream.src = url;
+    }
+  };
+
+  ws.onclose = function() {
+    console.log("WebSocket connection closed. Reconnecting...");
+    setTimeout(setupWebSocket, 1000);
+  };
+}
+
+// WebSocket setup for multi-video streams
+function setupWebSocketForMultiStream() {
+  const ws = new WebSocket("ws://127.0.0.1:8000/ws2");
+  ws.onmessage = function(event) {
+    if (event.data instanceof Blob) {
+      const blob = new Blob([event.data], { type: 'image/jpeg' });
+      const url = URL.createObjectURL(blob);
+
+      // Example: randomly alternate streams between the two videos
+      if (Math.random() > 0.5) {
+        multiVideo1.src = url;
+      } else {
+        multiVideo2.src = url;
+      }
+    }
+  };
+
+  ws.onclose = function() {
+    console.log("WebSocket connection closed for multi-video. Reconnecting...");
+    setTimeout(setupWebSocketForMultiStream, 1000);
+  };
+}
