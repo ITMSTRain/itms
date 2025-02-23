@@ -1,7 +1,7 @@
 import React from 'react';
 import { ComboboxDemo } from "@/components/videotype";
 import { ClassType } from "@/components/classtype";
-import { AddCamera } from "@/components/add-camera";
+import AddCamera from "@/components/add-camera";
 import { FullScreenButton } from "@/components/fullscreen-button";
 import SpeedOverTime from "@/components/speed-over-time";
 import LogsOverTime from "@/components/logs-over-time";
@@ -10,7 +10,7 @@ import AvatarHeader from "@/components/avatar-sidebar";
 interface HeaderProps {
   onGridChange: (value: string) => void;
   onFullScreenClick: () => void;
-  onSave: (cameraName: string) => void; // Accept onSave prop
+  onSave: (cameraName: string, cameraAPI: string) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ onGridChange, onFullScreenClick, onSave }) => {
@@ -31,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ onGridChange, onFullScreenClick, onSave
         <div className="flex items-center space-x-4">
           <ComboboxDemo onChange={onGridChange} />
           <ClassType />
-          <AddCamera onSave={onSave} /> {/* Pass onSave to AddCamera */}
+          <AddCamera onSave={onSave} />
           <FullScreenButton onClick={onFullScreenClick} />
           <SpeedOverTime />
           <LogsOverTime />
