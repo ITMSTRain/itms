@@ -24,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ cameraNames, onDeleteCamera, onReload
         <Button
           variant="outline"
           size="icon"
-          onClick={() => onReloadCamera(0)} // Modify index as needed
+          onClick={() => onReloadCamera(1)} // Modify index as needed
         >
           <ArrowPathRoundedSquareIcon className="h-5 w-5 text-gray-500" />
         </Button>

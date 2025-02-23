@@ -5,7 +5,7 @@ import Sidebar from "@/components/sidebar";
 import VideoGrid from "@/components/videogrid";
 
 const CameraSurveillanceDashboard: React.FC = () => {
-  const [gridSize, setGridSize] = useState<number>(1);
+  const [gridSize, setGridSize] = useState<number>(2);
   const [selectedVideo, setSelectedVideo] = useState<number | null>(null);
   const [clickState, setClickState] = useState<{
     count: number;

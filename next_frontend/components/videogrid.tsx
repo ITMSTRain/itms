@@ -1,29 +1,62 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 interface VideoGridProps {
   gridSize: number;
   selectedVideo: number | null;
   onVideoClick: (index: number) => void;
   onVideoDoubleClick: (index: number) => void;
-  videoRefs: React.RefObject<(HTMLVideoElement | null)[]>; // Ensure this is correctly typed
 }
+
+const activeStreams: { [key: string]: WebSocket } = {}; // Track active WebSockets
 
 const VideoGrid: React.FC<VideoGridProps> = ({
   gridSize,
   selectedVideo,
   onVideoClick,
   onVideoDoubleClick,
-  videoRefs,
 }) => {
+  const videoRefs = useRef<(HTMLImageElement | null)[]>([]);
+
+  useEffect(() => {
+    updateVideoGrid(gridSize);
+  }, [gridSize]);
+
+  function updateVideoGrid(size: number) {
+    videoRefs.current = new Array(size).fill(null);
+  }
+
+  function startStream(cameraId: string, index: number) {
+    if (activeStreams[cameraId]) {
+      console.warn(`🚨 Already streaming ${cameraId}`);
+      return;
+    }
+
+    const ws = new WebSocket(`ws://127.0.0.1:8000/ws/videos/${cameraId}`);
+    activeStreams[cameraId] = ws;
+    ws.binaryType = "blob";
+
+    ws.onmessage = (event) => {
+      if (videoRefs.current[index]) {
+        const blob = event.data;
+        const url = URL.createObjectURL(blob);
+        videoRefs.current[index]!.src = url;
+      }
+    };
+
+    ws.onclose = () => {
+      console.warn(`🚨 WebSocket for ${cameraId} closed! Reconnecting...`);
+      delete activeStreams[cameraId];
+      setTimeout(() => startStream(cameraId, index), 3000);
+    };
+  }
+
   return (
     <div
       id="video-grid"
-      className={`h-full grid gap-2 md:gap-2`}
+      className="h-full grid gap-2 md:gap-2"
       style={{
         gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(gridSize))}, 1fr)`,
-        gridTemplateRows: `repeat(${Math.ceil(
-          gridSize / Math.ceil(Math.sqrt(gridSize))
-        )}, 1fr)`,
+        gridTemplateRows: `repeat(${Math.ceil(gridSize / Math.ceil(Math.sqrt(gridSize)))}, 1fr)`,
       }}
     >
       {Array.from({ length: gridSize }).map((_, index) => (
@@ -35,20 +68,14 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           onClick={() => onVideoClick(index)}
           onDoubleClick={() => onVideoDoubleClick(index)}
         >
-          <video
+          <img
             ref={(el) => {
-              if (el) {
-                videoRefs.current[index] = el;
-              }
+              if (el) videoRefs.current[index] = el;
             }}
-            src="http://localhost:8000/PB_video_feed"
-            className={`w-full h-full object-cover ${
-              selectedVideo === index ? "border-4 border-white" : ""
-            }`}
-            autoPlay
-            muted
-            loop
-            controls
+            id={`video-feed-${index}`}
+            className="w-full h-full object-cover"
+            src="/assets/errorvideo.jpg" // Default placeholder
+            alt={`Stream ${index}`}
           />
           <div className="absolute inset-0 flex items-center justify-center text-white">
             Video {index + 1}
