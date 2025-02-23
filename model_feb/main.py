@@ -96,7 +96,7 @@ offset = 23
 PB_speed_calculator = SpeedCalculator(PB_red_line_y, PB_blue_line_y, offset, PB_road_distance)
 bsu_speed_calculator = SpeedCalculator(bsu_red_line_y, bsu_blue_line_y, offset, bsu_road_distance)
 Bulaklakan_speed_calculator = SpeedCalculator( Bulaklakan_red_line_y, Bulaklakan_blue_line_y, offset, Bulaklakan_road_distance)
-Hdel_speed_calculator = SpeedCalculator(Hdel_red_line_x, Hdel_blue_line_x, offset, Hdel_road_distance)
+Hdel_speed_calculator = SpeedCalculator()
 
 # Define trapezoidal ROI coordinates
 pb_roi = np.array([

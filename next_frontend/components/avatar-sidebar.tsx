@@ -67,7 +67,7 @@ const AvatarSidebar = () => {
 
         <Separator className="my-4" />
 
-        <SheetFooter className="mt-[575px]">
+        <SheetFooter className="mt-[500px]">
           <Button
             variant="outline" // Match "Go to Dashboard" layout
             className="w-full"
