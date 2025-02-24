@@ -7,9 +7,12 @@ interface SidebarProps {
   cameraNames: { name: string; api: string }[];
   onDeleteCamera: (index: number) => void;
   onReloadCamera: (index: number) => void;
+  onCameraClick: (cameraName: string) => void;
+  videoRefs: React.RefObject<(HTMLCanvasElement | null)[]>;
+
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ cameraNames, onDeleteCamera, onReloadCamera }) => {
+const Sidebar: React.FC<SidebarProps> = ({ cameraNames, onDeleteCamera, onReloadCamera, onCameraClick }) => {
   return (
     <div className="bg-white text-black p-4 w-64 relative">
       {/* Header with Reload Button */}
@@ -23,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ cameraNames, onDeleteCamera, onReload
       <ScrollArea className="h-[calc(100vh-10rem)] space-y-1 pr-2 mt-8">
         {cameraNames.length > 0 ? (
           cameraNames.map((camera, index) => (
-            <div key={index} className="flex items-center justify-between p-2 rounded hover:bg-gray-200">
+            <div key={index} className="flex items-center justify-between p-2 rounded hover:bg-gray-200" onClick={() => onCameraClick(camera.name)}>
               <div>
                 <p className="font-medium">{camera.name}</p>
                 <p className="text-xs text-gray-500">{camera.api}</p>

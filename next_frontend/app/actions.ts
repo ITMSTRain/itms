@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
@@ -132,3 +133,12 @@ export const signOutAction = async () => {
   await supabase.auth.signOut();
   return redirect("/sign-in");
 };
+
+export async function fetchVideoNames() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("video_data").select("video_name");
+
+  if (error) throw new Error("Failed to fetch video names");
+
+  return data;
+}

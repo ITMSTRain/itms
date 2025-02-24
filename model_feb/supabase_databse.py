@@ -42,7 +42,7 @@ app.mount("/web2025", StaticFiles(directory="web2025"), name="web2025")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8080", "http://localhost:8080"],  # You can restrict this to specific origins like ["http://localhost"]
+    allow_origins=["http://127.0.0.1:8080", "http://localhost:8080", "http://localhost:3000/"],  # You can restrict this to specific origins like ["http://localhost"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -146,7 +146,7 @@ def fetch_videos(video_names):
     """Fetch available videos from the database."""
     print(f"Fetching videos for: {video_names}")  # Debugging line
 
-    response = supabase.table("videos").select("video_name, video_link").in_("video_name", video_names).execute()
+    response = supabase.table("video_data").select("video_name, video_source").in_("video_name", video_names).execute()
     
     if response.data:
         print(f"Fetched videos: {response.data}")  # Debugging line
@@ -285,7 +285,7 @@ async def websocket_stream(websocket: WebSocket, video_name: str):
         await websocket.close()
         return
 
-    video_path = video_data[0]["video_link"]
+    video_path = video_data[0]["video_source"]
 
     if video_name == "bsu_road":
         speed_calc = bsu_speed_calculator
