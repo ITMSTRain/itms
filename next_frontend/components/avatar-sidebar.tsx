@@ -13,9 +13,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { createBrowserClient } from "@supabase/ssr";
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const AvatarSidebar = () => {
-  const router = useRouter(); // Use useRouter from next/navigation
+  const router = useRouter(); // ✅ Initialize useRouter inside the component
 
   const navigateToDashboard = () => {
     router.push("/dashboard");
@@ -25,11 +31,40 @@ const AvatarSidebar = () => {
     router.push("/userlogs");
   };
 
-  const signOut = () => {
-    // Handle sign out logic here (e.g., clear cookies, reset state)
-    router.push("/login");
+  const signOut = async () => {
+    try {
+      const { data: user, error: userError } = await supabase.auth.getUser();
+  
+      if (userError || !user || !user.user) {
+        console.error("Error fetching user:", userError);
+        return;
+      }
+  
+      const userEmail = user.user.email; // Get user email
+  
+      // ✅ Update TimeOut in the database for the most recent session
+      const { error: updateError } = await supabase
+        .from("userlogs") // Make sure this matches your actual table name
+        .update({ TimeOut: new Date().toISOString() }) // Sets logout timestamp
+        .eq("Email", userEmail)
+        .is("TimeOut", null); // Ensures only the most recent session is updated
+  
+      if (updateError) {
+        console.error("Error updating logout time:", updateError);
+      } else {
+        console.log("Logout time recorded successfully!");
+      }
+  
+      // ✅ Perform actual logout
+      await supabase.auth.signOut();
+  
+      // ✅ Redirect to login page
+      router.push("/login");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
   };
-
+  
   const navigateToAbout = () => {
     router.push("/about");
   };
@@ -46,18 +81,10 @@ const AvatarSidebar = () => {
         </SheetHeader>
 
         <div className="flex flex-col gap-4 mt-4">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={navigateToDashboard}
-          >
+          <Button variant="outline" className="w-full" onClick={navigateToDashboard}>
             Go to Dashboard
           </Button>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={navigateToUserLogs}
-          >
+          <Button variant="outline" className="w-full" onClick={navigateToUserLogs}>
             User Logs
           </Button>
           <Button variant="destructive" className="w-full" onClick={signOut}>
@@ -68,11 +95,7 @@ const AvatarSidebar = () => {
         <Separator className="my-4" />
 
         <SheetFooter className="mt-[500px]">
-          <Button
-            variant="outline" // Match "Go to Dashboard" layout
-            className="w-full"
-            onClick={navigateToAbout}
-          >
+          <Button variant="outline" className="w-full" onClick={navigateToAbout}>
             About
           </Button>
         </SheetFooter>
