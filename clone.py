@@ -1,6 +1,6 @@
 import git
 
-repo_url = "https://github.com/KINDEMO1/Improved-Road-Guard-Frontend.git"
+repo_url = "https://github.com/ITMSTRain/itms.git"
 repo_path = "frontend"
 
 # Clone the repository if it doesn't exist
