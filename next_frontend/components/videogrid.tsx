@@ -5,7 +5,7 @@ interface VideoGridProps {
   selectedVideo: number | null;
   onVideoClick: (index: number) => void;
   onVideoDoubleClick: (index: number) => void;
-  videoRefs: React.RefObject<(HTMLCanvasElement | null)[]>;
+  videoRefs: React.RefObject<(HTMLImageElement | null)[]>;
 }
 
 const VideoGrid: React.FC<VideoGridProps> = ({
@@ -18,7 +18,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   return (
     <div
       id="video-grid"
-      className={`h-full grid gap-2 md:gap-2`}
+      className="h-full grid gap-2 md:gap-2"
       style={{
         gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(gridSize))}, 1fr)`,
         gridTemplateRows: `repeat(${Math.ceil(
@@ -35,17 +35,18 @@ const VideoGrid: React.FC<VideoGridProps> = ({
           onClick={() => onVideoClick(index)}
           onDoubleClick={() => onVideoDoubleClick(index)}
         >
-          <canvas
-          ref={(el) => {
-            if (el) {
-              videoRefs.current[index] = el; // ✅ TypeScript is happy now
-            }
-          }}
+          <img
+            ref={(el) => {
+              if (el) {
+                videoRefs.current[index] = el;
+              }
+            }}
+            className="w-full h-full object-cover"
           />
 
 
+          {/* Overlay Text (optional) */}
           <div className="absolute inset-0 flex items-center justify-center text-white">
-            Video {index + 1}
           </div>
         </div>
       ))}

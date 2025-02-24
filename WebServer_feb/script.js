@@ -108,23 +108,23 @@ document.addEventListener("DOMContentLoaded", function () {
   // 🟢 FUNCTION TO START WEBSOCKET STREAM
 // Track active WebSockets
 
-  async function startStream(cameraId, imgElementId) {
-    if (activeStreams[cameraId]) {
-        console.warn(`🚨 Already streaming ${cameraId}`);
+  async function startStream(cameraName, imgElementId) {
+    if (activeStreams[cameraName]) {
+        console.warn(`🚨 Already streaming ${cameraName}`);
         return;
     }
 
     function reconnect() {
-        console.log(`🔄 Reconnecting ${cameraId}...`);
-        delete activeStreams[cameraId];
-        setTimeout(() => startStream(cameraId, imgElementId), 3000); // Wait 3 sec before retry
+        console.log(`🔄 Reconnecting ${cameraName}...`);
+        delete activeStreams[cameraName];
+        setTimeout(() => startStream(cameraName, imgElementId), 3000); // Wait 3 sec before retry
     }
 
-    let ws = new WebSocket(`ws://127.0.0.1:8000/ws/videos/${cameraId}`);
+    let ws = new WebSocket(`ws://127.0.0.1:8000/ws/videos/${cameraName}`);
     let imgElement = document.getElementById(imgElementId);
 
     ws.binaryType = "blob";
-    activeStreams[cameraId] = ws;
+    activeStreams[cameraName] = ws;
 
     ws.onmessage = (event) => {
         let blob = event.data;
@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     ws.onclose = () => {
-        console.warn(`🚨 WebSocket for ${cameraId} closed!`);
+        console.warn(`🚨 WebSocket for ${cameraName} closed!`);
         reconnect();
     };
   }

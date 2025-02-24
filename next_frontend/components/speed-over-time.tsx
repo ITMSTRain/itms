@@ -27,121 +27,108 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
-import { Button } from "@/components/ui/button"; // ✅ Importing Button for consistent styling
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
+import { Button } from "@/components/ui/button";
 
-const chartData = [
-  { date: "2024-04-01", desktop: 222, mobile: 150 },
-  { date: "2024-04-02", desktop: 97, mobile: 180 },
-  { date: "2024-04-03", desktop: 167, mobile: 120 },
-  { date: "2024-04-04", desktop: 242, mobile: 260 },
-  { date: "2024-04-05", desktop: 373, mobile: 290 },
-  { date: "2024-04-06", desktop: 301, mobile: 340 },
-  { date: "2024-04-07", desktop: 245, mobile: 180 },
-  { date: "2024-04-08", desktop: 409, mobile: 320 },
-  { date: "2024-04-09", desktop: 59, mobile: 110 },
-  { date: "2024-04-10", desktop: 261, mobile: 190 },
-];
+// API URL for HTTP polling
+const API_URL = "http://127.0.0.1:8000/PB_latest_speed"; // ✅ Ensure this matches your backend
 
 const chartConfig = {
-  views: {
-    label: "Page Views",
-  },
-  desktop: {
-    label: "Desktop",
+  speed: {
+    label: "Vehicle Speed (km/h)",
     color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig;
 
-export default function SpeedOverTime() {
-  const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("desktop");
+// Define TypeScript interface for API response
+interface SpeedDataResponse {
+  latest_speed: Record<string, number>; // Object with vehicle IDs as keys and speeds as values
+  vehicle_count: number;
+}
 
-  const total = React.useMemo(() => ({
-    desktop: chartData.reduce((acc, curr) => acc + curr.desktop, 0),
-    mobile: chartData.reduce((acc, curr) => acc + curr.mobile, 0),
-  }), []);
+// Define chart data type
+interface ChartData {
+  time: string;
+  speed: number;
+}
+
+export default function SpeedOverTime() {
+  const [chartData, setChartData] = React.useState<ChartData[]>([]);
+
+  React.useEffect(() => {
+    const fetchSpeedData = async () => {
+      try {
+        console.log("🔄 Fetching speed data...");
+        const response = await fetch(API_URL);
+        
+        if (!response.ok) throw new Error("❌ Failed to fetch speed data");
+
+        const data: SpeedDataResponse = await response.json();
+
+        console.log("✅ Received data:", data);
+
+        if (data.latest_speed && Object.keys(data.latest_speed).length > 0) {
+          const speedValues: number[] = Object.values(data.latest_speed).map((speed) => Number(speed));
+
+          const avgSpeed = speedValues.length > 0
+            ? speedValues.reduce((a: number, b: number) => a + b, 0) / speedValues.length
+            : 0;
+
+          console.log("📈 Calculated average speed:", avgSpeed);
+
+          setChartData((prevData) => {
+            const newData = [
+              ...prevData.slice(-19), // Keep last 20 entries
+              { time: new Date().toLocaleTimeString().slice(0, 5), speed: avgSpeed }
+            ];
+            console.log("📉 Updated Chart Data:", newData);
+            return newData;
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error fetching speed data:", error);
+      }
+    };
+
+    // Polling: Fetch data every 3 seconds
+    const interval = setInterval(fetchSpeedData, 3000);
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []); // ✅ Runs only once
 
   return (
     <Drawer>
-      {/* ✅ Updated Trigger Button to match Full Screen style */}
       <DrawerTrigger asChild>
-        <Button variant="outline">
-          Speed Over Time
-        </Button>
+        <Button variant="outline">Speed Over Time</Button>
       </DrawerTrigger>
 
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>Speed Over Time</DrawerTitle>
-          <DrawerDescription>Visualize vehicle speeds over time.</DrawerDescription>
+          <DrawerDescription>Live vehicle speed updates</DrawerDescription>
         </DrawerHeader>
 
         <Card className="border border-gray-400">
           <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
             <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
               <CardTitle>Bar Chart - Interactive</CardTitle>
-              <CardDescription>Showing total visitors for the last 3 months</CardDescription>
-            </div>
-            <div className="flex">
-              {["desktop", "mobile"].map((key) => {
-                const chart = key as keyof typeof chartConfig;
-                return (
-                  <button
-                    key={chart}
-                    data-active={activeChart === chart}
-                    className="relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-l sm:border-t-0 sm:px-8 sm:py-6"
-                    onClick={() => setActiveChart(chart)}
-                  >
-                    <span className="text-xs text-muted-foreground">{chartConfig[chart].label}</span>
-                    <span className="text-lg font-bold leading-none sm:text-3xl">
-                      {total[key as keyof typeof total].toLocaleString()}
-                    </span>
-                  </button>
-                );
-              })}
+              <CardDescription>Showing real-time speed updates</CardDescription>
             </div>
           </CardHeader>
 
           <CardContent className="px-2 sm:p-6">
-            <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
-              <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  minTickGap={32}
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    });
-                  }}
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      className="w-[150px]"
-                      nameKey="views"
-                      labelFormatter={(value) =>
-                        new Date(value).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      }
-                    />
-                  }
-                />
-                <Bar dataKey={activeChart} fill={`var(--color-${activeChart})`} />
-              </BarChart>
-            </ChartContainer>
+            {chartData.length > 0 ? (
+              <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+                <BarChart width={600} height={300} data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="time" tickMargin={8} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="speed" fill="hsl(var(--chart-1))" />
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <p>Waiting for speed data...</p>
+            )}
           </CardContent>
         </Card>
 

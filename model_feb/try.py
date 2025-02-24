@@ -1,15 +1,17 @@
-import socket
-import os
 
-def get_local_ip():
-    try:
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        return local_ip
-    except socket.error as e:
-        print(f"Error fetching local IP: {e}")
-        return None
+import yt_dlp
 
-ip = get_local_ip()
+# YouTube Video URL
+video_url = "https://www.youtube.com/watch?v=e_WBuBqS9h8"
 
-print(ip)
+# Get direct video stream URL using yt_dlp
+ydl_opts = {
+    "quiet": True,
+    "format": "best[ext=mp4]",
+}
+
+with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    info_dict = ydl.extract_info(video_url, download=False)
+    stream_url = info_dict["url"] 
+
+print(stream_url)

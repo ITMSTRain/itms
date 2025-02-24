@@ -34,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({ onGridChange, onFullScreenClick, onSave
           <AddCamera onSave={onSave} />
           <FullScreenButton onClick={onFullScreenClick} />
           <SpeedOverTime />
-          <LogsOverTime />
+          <LogsOverTime />  {/* ✅ Added LogsOverTime component */}
           <AvatarHeader />
         </div>
       </div>

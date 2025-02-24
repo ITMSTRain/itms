@@ -2,30 +2,20 @@
 
 import React, { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import Header from "@/components/allheader"; // Imported Header
-
-// Importing ShadCN components
+import Header from "@/components/allheader";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardContent, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createBrowserClient } from "@supabase/ssr"; // ✅ CORRECT WAY TO IMPORT SUPABASE
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const SignUpPage = () => {
-  const [formData, setFormData] = useState<{
-    email: string;
-    password: string;
-    confirmPassword: string;
-  }>({
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "", confirmPassword: "" });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,13 +43,29 @@ const SignUpPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const signUpNewUser = async () => {
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        emailRedirectTo: "https://example.com/welcome",
+      },
+    });
+
+    if (error) {
+      setErrors((prev) => ({ ...prev, email: error.message }));
+    }
+
+    return data;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
       setIsLoading(true);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        console.log("Account created:", formData);
+        const userData = await signUpNewUser();
+        console.log("Account created:", userData);
       } catch (error) {
         console.error("Sign up error:", error);
       } finally {
@@ -68,17 +74,9 @@ const SignUpPage = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
-      <Header /> {/* Added Header */}
+      <Header />
       <main className="flex-grow flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md space-y-8 shadow-2xl shadow-black/70">
           <CardHeader>
@@ -97,13 +95,11 @@ const SignUpPage = () => {
                   autoComplete="email"
                   placeholder="Enter your email"
                   value={formData.email}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className={errors.email ? "border-red-500" : ""}
                   aria-invalid={errors.email ? "true" : "false"}
                 />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email}</p>
-                )}
+                {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
               </div>
 
               <div className="space-y-2">
@@ -116,25 +112,15 @@ const SignUpPage = () => {
                     autoComplete="new-password"
                     placeholder="Enter your password"
                     value={formData.password}
-                    onChange={handleChange}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className={errors.password ? "border-red-500" : ""}
                     aria-invalid={errors.password ? "true" : "false"}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                  >
-                    {showPassword ? (
-                      <EyeOffIcon className="h-4 w-4 text-gray-500" />
-                    ) : (
-                      <EyeIcon className="h-4 w-4 text-gray-500" />
-                    )}
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {showPassword ? <EyeOffIcon className="h-4 w-4 text-gray-500" /> : <EyeIcon className="h-4 w-4 text-gray-500" />}
                   </button>
                 </div>
-                {errors.password && (
-                  <p className="text-sm text-red-500">{errors.password}</p>
-                )}
+                {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
               </div>
 
               <div className="space-y-2">
@@ -146,15 +132,11 @@ const SignUpPage = () => {
                   autoComplete="new-password"
                   placeholder="Confirm your password"
                   value={formData.confirmPassword}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   className={errors.confirmPassword ? "border-red-500" : ""}
                   aria-invalid={errors.confirmPassword ? "true" : "false"}
                 />
-                {errors.confirmPassword && (
-                  <p className="text-sm text-red-500">
-                    {errors.confirmPassword}
-                  </p>
-                )}
+                {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
@@ -164,13 +146,7 @@ const SignUpPage = () => {
           </CardContent>
           <CardFooter>
             <p className="text-center text-sm text-gray-600 w-full">
-              Already have an account?{" "}
-              <a
-                href="#"
-                className="font-medium text-blue-600 hover:text-blue-500"
-              >
-                Sign in
-              </a>
+              Already have an account? <a href="#" className="font-medium text-blue-600 hover:text-blue-500">Sign in</a>
             </p>
           </CardFooter>
         </Card>

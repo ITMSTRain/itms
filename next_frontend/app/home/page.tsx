@@ -18,7 +18,7 @@ const CameraSurveillanceDashboard: React.FC = () => {
 
   // ✅ Now holds objects with name and api
   const [cameraNames, setCameraNames] = useState<{ name: string; api: string }[]>([]);
-  const videoRefs = useRef<(HTMLCanvasElement | null)[]>([]);
+  const videoRefs = useRef<(HTMLImageElement | null)[]>([]);
 
 
 
@@ -152,14 +152,14 @@ const CameraSurveillanceDashboard: React.FC = () => {
     ws.onmessage = async (event) => {
       let blob = event.data;
       let bitmap = await createImageBitmap(blob); // 🔥 Convert blob to an image
-      let canvas = videoRefs.current[videoIndex];
-  
-      if (canvas && canvas.getContext) {
-        let ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height); // 🔥 Draw frame on canvas
-        }
+      let imgElement = videoRefs.current[videoIndex];
+
+      if (imgElement) {
+        let imgUrl = URL.createObjectURL(blob);
+        imgElement.src = imgUrl; // Set image source
+        imgElement.onload = () => URL.revokeObjectURL(imgUrl); // Prevent memory leaks
       }
+
     };
   
     ws.onclose = () => {
@@ -188,7 +188,7 @@ const CameraSurveillanceDashboard: React.FC = () => {
           videoRefs={videoRefs}
         />
 
-        <div className="flex-1 bg-gray-900 p-4 md:p-6 pb-12">
+        <div className="flex-1 bg-gray-900 p-4 md:p-6 pb-50 overflow-auto">
           <VideoGrid
             gridSize={gridSize}
             selectedVideo={selectedVideo}

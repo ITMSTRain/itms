@@ -42,7 +42,7 @@ app.mount("/web2025", StaticFiles(directory="web2025"), name="web2025")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8080", "http://localhost:8080", "http://localhost:3000/"],  # You can restrict this to specific origins like ["http://localhost"]
+    allow_origins=["http://127.0.0.1:8080", "http://localhost:8080", "http://localhost:3000"],  # You can restrict this to specific origins like ["http://localhost"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

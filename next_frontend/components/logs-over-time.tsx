@@ -27,45 +27,58 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
 
-const chartData = [
-  { date: "2024-04-01", desktop: 222, mobile: 150, views: 372 },
-  { date: "2024-04-02", desktop: 97, mobile: 180, views: 277 },
-  { date: "2024-04-03", desktop: 167, mobile: 120, views: 287 },
-  { date: "2024-04-04", desktop: 242, mobile: 260, views: 502 },
-  { date: "2024-04-05", desktop: 373, mobile: 290, views: 663 },
-  { date: "2024-04-06", desktop: 301, mobile: 340, views: 641 },
-  { date: "2024-04-07", desktop: 245, mobile: 180, views: 425 },
-  { date: "2024-04-08", desktop: 409, mobile: 320, views: 729 },
-  { date: "2024-04-09", desktop: 59, mobile: 110, views: 169 },
-  { date: "2024-04-10", desktop: 261, mobile: 190, views: 451 },
-];
+// API URL for HTTP polling
+const API_URL = "http://127.0.0.1:8000/PB_vehicle_classifications"; // ✅ Fetch vehicle classifications
 
-const chartConfig = {
-  views: {
-    label: "Total Views",
-    color: "hsl(var(--chart-3))",
-  },
-  desktop: {
-    label: "Desktop",
-    color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(var(--chart-2))",
-  },
+const vehicleChartConfig = {
+  Bus: { label: "Bus", color: "hsl(var(--chart-1))" },
+  Car: { label: "Car", color: "hsl(var(--chart-2))" },
+  Jeep: { label: "Jeep", color: "hsl(var(--chart-3))" },
+  Motorcycle: { label: "Motorcycle", color: "hsl(var(--chart-4))" },
+  Person: { label: "Person", color: "hsl(var(--chart-5))" },
+  Tricycle: { label: "Tricycle", color: "hsl(var(--chart-6))" },
+  Truck: { label: "Truck", color: "hsl(var(--chart-7))" },
+  Van: { label: "Van", color: "hsl(var(--chart-8))" },
 } satisfies ChartConfig;
 
-export default function LogsOverTime() {
-  const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("views");
+interface VehicleData {
+  vehicle_classifications: Record<string, number>;
+}
 
-  const total = React.useMemo(() => ({
-    views: chartData.reduce((acc, curr) => acc + curr.views, 0),
-    desktop: chartData.reduce((acc, curr) => acc + curr.desktop, 0),
-    mobile: chartData.reduce((acc, curr) => acc + curr.mobile, 0),
-  }), []);
+export default function LogsOverTime() {
+  const [chartData, setChartData] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchVehicleData = async () => {
+      try {
+        console.log("🔄 Fetching vehicle classification data...");
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error("❌ Failed to fetch vehicle data");
+
+        const data: VehicleData = await response.json();
+        console.log("✅ Received data:", data);
+
+        if (data.vehicle_classifications) {
+          const formattedData = Object.keys(data.vehicle_classifications).map((key) => ({
+            type: key,
+            count: data.vehicle_classifications[key],
+          }));
+
+          console.log("📊 Formatted Chart Data:", formattedData);
+          setChartData(formattedData);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching vehicle classification data:", error);
+      }
+    };
+
+    // Polling every 5 seconds
+    const interval = setInterval(fetchVehicleData, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Drawer>
@@ -76,71 +89,31 @@ export default function LogsOverTime() {
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>Logs Over Time</DrawerTitle>
-          <DrawerDescription>Analyze logs across different platforms.</DrawerDescription>
+          <DrawerDescription>Live vehicle classification updates</DrawerDescription>
         </DrawerHeader>
 
         <Card className="border border-gray-400">
           <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
             <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-              <CardTitle>Log Data Overview</CardTitle>
-              <CardDescription>Showing total logs for the past 10 days</CardDescription>
-            </div>
-            <div className="flex">
-              {["views", "desktop", "mobile"].map((key) => {
-                const chart = key as keyof typeof chartConfig;
-                return (
-                  <button
-                    key={chart}
-                    data-active={activeChart === chart}
-                    className="relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-l sm:border-t-0 sm:px-8 sm:py-6"
-                    onClick={() => setActiveChart(chart)}
-                  >
-                    <span className="text-xs text-muted-foreground">{chartConfig[chart].label}</span>
-                    <span className="text-lg font-bold leading-none sm:text-3xl">
-                      {total[chart].toLocaleString()}
-                    </span>
-                  </button>
-                );
-              })}
+              <CardTitle>Vehicle Classifications</CardTitle>
+              <CardDescription>Showing real-time vehicle logs</CardDescription>
             </div>
           </CardHeader>
 
           <CardContent className="px-2 sm:p-6">
-            <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
-              <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  minTickGap={32}
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    });
-                  }}
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      className="w-[150px]"
-                      nameKey={activeChart}
-                      labelFormatter={(value) =>
-                        new Date(value).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      }
-                    />
-                  }
-                />
-                <Bar dataKey={activeChart} fill={chartConfig[activeChart].color} />
-              </BarChart>
-            </ChartContainer>
+            {chartData.length > 0 ? (
+              <ChartContainer config={vehicleChartConfig} className="aspect-auto h-[250px] w-full">
+                <BarChart width={600} height={300} data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="type" tickMargin={8} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="hsl(var(--chart-1))" />
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <p>Waiting for vehicle data...</p>
+            )}
           </CardContent>
         </Card>
 

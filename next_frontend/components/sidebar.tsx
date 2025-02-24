@@ -8,7 +8,7 @@ interface SidebarProps {
   onDeleteCamera: (index: number) => void;
   onReloadCamera: (index: number) => void;
   onCameraClick: (cameraName: string) => void;
-  videoRefs: React.RefObject<(HTMLCanvasElement | null)[]>;
+  videoRefs: React.RefObject<(HTMLImageElement | null)[]>;
 
 }
 
