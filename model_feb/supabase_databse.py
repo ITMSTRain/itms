@@ -177,7 +177,7 @@ async def process_video(video_path, speed_calculator, latest_speed_store, websoc
     """Process a video file or an IP camera stream."""
     global selected_classes
 
-    is_ip_camera = video_path.startswith(("rtsp://", "http://", "https://"))
+    is_ip_camera = video_path.startswith(("rtsp://", "http://", "https://")) 
     display_speed = 0
     while True:  # 🔥 Keep trying until we get a working stream
         cap = cv2.VideoCapture(video_path)

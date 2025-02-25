@@ -19,52 +19,59 @@ import {
 } from "@/components/ui/popover";
 
 const classifications = [
+  { value: "all", label: "All" },
   { value: "Bus", label: "Bus" },
   { value: "Car", label: "Car" },
+  { value: "Van", label: "Van" },
+  { value: "Truck", label: "Truck" },
   { value: "Jeep", label: "Jeepney" },
+  { value: "Tricycle", label: "Tricycle" },
   { value: "Motorcycle", label: "Motorcycle" },
   { value: "Person", label: "Pedestrian" },
-  { value: "Tricycle", label: "Tricycle" },
-  { value: "Truck", label: "Truck" },
-  { value: "Van", label: "Van" },
 ];
 
 export function ClassType() {
   const [open, setOpen] = React.useState(false);
   const [selectedValues, setSelectedValues] = React.useState<string[]>([]);
 
-  // Function to send the POST request
   const sendPostRequest = async (updatedValues: string[]) => {
-
-
     try {
-      const response = await fetch("http://127.0.0.1:8000/update_classes", {
+      await fetch("http://127.0.0.1:8000/update_classes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ vehicle_classes: updatedValues }),
       });
-
-      const data = await response.json();
     } catch (error) {
-    } finally {
+      console.error("Error sending POST request:", error);
     }
   };
 
-  // Handle selection and trigger the API request
   const handleSelect = (value: string) => {
     setSelectedValues((prev) => {
-      const newValues = prev.includes(value)
-        ? prev.filter((item) => item !== value) // Remove if already selected
-        : [...prev, value]; // Add if not selected
+      let newValues;
 
-      sendPostRequest(newValues); // Send updated selection immediately
+      if (value === "all") {
+        newValues = classifications
+          .filter((item) => item.value !== "all")
+          .map((item) => item.value);
+      } else {
+        newValues = prev.includes(value)
+          ? prev.filter((item) => item !== value)
+          : [...prev, value];
+
+        if (newValues.length === classifications.length - 1) {
+          newValues = ["all"];
+        }
+      }
+
+      sendPostRequest(newValues);
       return newValues;
     });
   };
 
-  const maxDisplayed = 3; // Limit displayed selected items
+  const maxDisplayed = 3;
 
   return (
     <div className="flex flex-col gap-2">
@@ -107,7 +114,6 @@ export function ClassType() {
           </Command>
         </PopoverContent>
       </Popover>
-
     </div>
   );
 }
