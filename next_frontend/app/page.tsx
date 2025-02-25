@@ -12,8 +12,7 @@ export default function Landing() {
         type="button" 
         onClick={() => router.push('/login')}
         className="px-6 py-3 text-lg font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all"
-      >
-        Home
+      >start
       </button>
     </main>
   );

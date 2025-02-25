@@ -19,7 +19,6 @@ class SpeedCalculator:
         self.counter_up = []
 
     def calculate_speed(self, cx, cy, id, frame, bbox):
-        x3, y3, x4, y4 = bbox
 
         # Handling horizontal lines (if provided)
         if self.red_line_y is not None and self.blue_line_y is not None:
@@ -95,4 +94,4 @@ class SpeedCalculator:
     def display_speed(self, frame, id, bbox, speed_kmh):
         x3, y3, x4, y4 = bbox
         cv2.circle(frame, ((x3 + x4) // 2, (y3 + y4) // 2), 4, (0, 0, 255), -1)
-        cv2.putText(frame, f'{int(speed_kmh)} Km/h', (x4, y4), cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 255, 255), 2)
+        # cv2.putText(frame, f'{int(speed_kmh)} Km/h', (x4, y4), cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 255, 255), 2)

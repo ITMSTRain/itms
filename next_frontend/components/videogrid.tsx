@@ -18,7 +18,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   return (
     <div
       id="video-grid"
-      className="h-full grid gap-2 md:gap-2"
+      className="h-full grid gap-4 md:gap-2 p-4"
       style={{
         gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(gridSize))}, 1fr)`,
         gridTemplateRows: `repeat(${Math.ceil(
@@ -29,24 +29,24 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       {Array.from({ length: gridSize }).map((_, index) => (
         <div
           key={index}
-          className={`relative aspect-w-16 aspect-h-9 bg-gray-700 ${
+          className={`relative aspect-w-16 aspect-h-9 bg-gray-700 overflow-hidden ${
             selectedVideo === index ? "border-4 border-white" : ""
           }`}
           onClick={() => onVideoClick(index)}
           onDoubleClick={() => onVideoDoubleClick(index)}
         >
+          {/* ✅ No Clipping: Uses object-contain */}
           <img
             ref={(el) => {
               if (el) {
                 videoRefs.current[index] = el;
               }
             }}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
 
-
-          {/* Overlay Text (optional) */}
-          <div className="absolute inset-0 flex items-center justify-center text-white">
+          {/* Overlay Text */}
+          <div className="absolute inset-0 flex items-center justify-center text-white font-bold pointer-events-none">
           </div>
         </div>
       ))}

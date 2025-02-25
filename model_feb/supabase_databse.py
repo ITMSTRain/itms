@@ -131,6 +131,12 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY) # type: ignore
 class VideoRequest(BaseModel):
     video_names: list[str]
 
+# Store selected classes as a set for dynamic updates
+selected_classes = set()
+
+class ClassUpdateRequest(BaseModel):
+    vehicle_classes: list[str]
+
 def get_local_ip():
     try:
         hostname = socket.gethostname()
@@ -141,6 +147,18 @@ def get_local_ip():
         return None
 
 ip = '127.0.0.1'
+
+@app.post("/update_classes")
+async def update_classes(request: ClassUpdateRequest):
+    global selected_classes
+    valid_classes = set(request.vehicle_classes) & set(class_names.values())  # Filter valid class names
+
+    if valid_classes:
+        selected_classes = valid_classes  # Update the global set
+        return {"message": f"Bounding boxes will be drawn for: {', '.join(selected_classes)}"}
+    else:
+        selected_classes = set(class_names.values())
+        return {"error": "Invalid class names provided"}
 
 def fetch_videos(video_names):
     """Fetch available videos from the database."""
@@ -157,7 +175,8 @@ def fetch_videos(video_names):
 
 async def process_video(video_path, speed_calculator, latest_speed_store, websocket: WebSocket):
     """Process a video file or an IP camera stream."""
-    
+    global selected_classes
+
     is_ip_camera = video_path.startswith(("rtsp://", "http://", "https://"))
     display_speed = 0
     while True:  # 🔥 Keep trying until we get a working stream
@@ -194,13 +213,6 @@ async def process_video(video_path, speed_calculator, latest_speed_store, websoc
                 og_height, og_width = frame.shape[:2]
                 resized_frame = cv2.resize(frame, (320, 320))
 
-                # Draw trapezoid ROI
-                # cv2.polylines(frame, [pb_roi], isClosed=True, color=(0, 255, 0), thickness=2)
-
-                # Draw red and blue lines
-                # cv2.line(frame, line_start_1, line_end_1, line_color, line_thickness)
-                # cv2.line(frame, line_start_2, line_end_2, line_color_2, line_thickness)
-
                 results = model(resized_frame,verbose=False)
                 fps = 1 / (time.time() - prev_time)
 
@@ -223,13 +235,15 @@ async def process_video(video_path, speed_calculator, latest_speed_store, websoc
                         if cv2.pointPolygonTest(pb_roi, (center_x, center_y), False) >= 0:
                             x, y, w, h = x1, y1, x2 - x1, y2 - y1
                             rects.append([x, y, w, h])
-
-                            # Use class-specific color for bounding box and text
-                            color = class_colors.get(int(class_id), (0, 255, 0))  # Default to green if class_id not found
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-                            label = f"{class_names.get(int(class_id), 'Unknown')} {score:.2f}"
-                            cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
-                    
+                            
+                            class_name = class_names.get(int(class_id), "Unknown")
+                            if class_name in selected_classes:
+                                # Use class-specific color for bounding box and text
+                                color = class_colors.get(int(class_id), (0, 255, 0))  # Default to green if class_id not found
+                                cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+                                label = f"{class_names.get(int(class_id), 'Unknown')} {score:.2f}"
+                                cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+                        
 
                     objects_bbs_ids = tracker.update(rects)
 

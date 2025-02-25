@@ -21,7 +21,20 @@ const supabase = createBrowserClient(
 );
 
 const AvatarSidebar = () => {
-  const router = useRouter(); // ✅ Initialize useRouter inside the component
+  const router = useRouter();
+  const [userEmail, setUserEmail] = React.useState("Loading...");
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      const { data: user, error } = await supabase.auth.getUser();
+      if (error || !user || !user.user) {
+        console.error("Error fetching user:", error);
+        return;
+      }
+      setUserEmail(user.user.email || "Unknown User");
+    };
+    fetchUser();
+  }, []);
 
   const navigateToDashboard = () => {
     router.push("/dashboard");
@@ -34,37 +47,33 @@ const AvatarSidebar = () => {
   const signOut = async () => {
     try {
       const { data: user, error: userError } = await supabase.auth.getUser();
-  
+
       if (userError || !user || !user.user) {
         console.error("Error fetching user:", userError);
         return;
       }
-  
-      const userEmail = user.user.email; // Get user email
-  
-      // ✅ Update TimeOut in the database for the most recent session
+
+      const userEmail = user.user.email;
+
       const { error: updateError } = await supabase
-        .from("userlogs") // Make sure this matches your actual table name
-        .update({ TimeOut: new Date().toISOString() }) // Sets logout timestamp
+        .from("userlogs")
+        .update({ TimeOut: new Date().toISOString() })
         .eq("Email", userEmail)
-        .is("TimeOut", null); // Ensures only the most recent session is updated
-  
+        .is("TimeOut", null);
+
       if (updateError) {
         console.error("Error updating logout time:", updateError);
       } else {
         console.log("Logout time recorded successfully!");
       }
-  
-      // ✅ Perform actual logout
+
       await supabase.auth.signOut();
-  
-      // ✅ Redirect to login page
       router.push("/login");
     } catch (err) {
       console.error("Logout failed:", err);
     }
   };
-  
+
   const navigateToAbout = () => {
     router.push("/about");
   };
@@ -77,7 +86,7 @@ const AvatarSidebar = () => {
 
       <SheetContent side="right">
         <SheetHeader>
-          <SheetTitle className="text-lg font-bold">John Doe</SheetTitle>
+          <SheetTitle className="text-lg font-bold">{userEmail}</SheetTitle>
         </SheetHeader>
 
         <div className="flex flex-col gap-4 mt-4">
