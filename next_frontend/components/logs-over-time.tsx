@@ -76,7 +76,7 @@ export default function LogsOverTime() {
     };
 
     // Polling every 5 seconds
-    const interval = setInterval(fetchVehicleData, 5000);
+    const interval = setInterval(fetchVehicleData, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -101,7 +101,7 @@ export default function LogsOverTime() {
           </CardHeader>
 
           <CardContent className="px-2 sm:p-6">
-            {chartData.length > 0 ? (
+    
               <ChartContainer config={vehicleChartConfig} className="aspect-auto h-[250px] w-full">
                 <BarChart width={600} height={300} data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -111,10 +111,8 @@ export default function LogsOverTime() {
                   <Bar dataKey="count" fill="hsl(var(--chart-1))" />
                 </BarChart>
               </ChartContainer>
-            ) : (
-              <p>Waiting for vehicle data...</p>
-            )}
-          </CardContent>
+            
+          </CardContent>``
         </Card>
 
         <DrawerFooter>

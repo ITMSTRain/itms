@@ -14,6 +14,8 @@ import {
   Bar,
 } from "recharts";
 import { FiRefreshCw, FiDownload, FiCamera } from "react-icons/fi";
+import SpeedOverTime from "@/components/speed-over-time";
+import LogsOverTime from "@/components/logs-over-time";
 
 // ShadCN components
 import { Button } from "@/components/ui/button";
@@ -176,31 +178,9 @@ const PerformanceDashboard = () => {
             <div className="h-[700px] mt-6">
               <ResponsiveContainer width="100%" height="100%">
                 {selectedChart === "speed" ? (
-                  <LineChart data={performanceData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="time" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="speed"
-                      stroke="#3B82F6"
-                      strokeWidth={2}
-                      dot={{ fill: "#3B82F6" }}
-                    />
-                  </LineChart>
+                  <SpeedOverTime />
                 ) : (
-                  <BarChart data={performanceData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="time" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="errorLogs" stackId="logs" fill="#EF4444" />
-                    <Bar dataKey="warningLogs" stackId="logs" fill="#F59E0B" />
-                    <Bar dataKey="logs" stackId="logs" fill="#10B981" />
-                  </BarChart>
+                  <LogsOverTime />
                 )}
               </ResponsiveContainer>
             </div>

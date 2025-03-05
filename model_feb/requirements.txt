@@ -1,0 +1,8 @@
+opencv-python
+Ultralytics
+dotenv
+supabase
+fastapi
+uvicorn
+numpy
+pydantic

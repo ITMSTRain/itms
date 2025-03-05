@@ -91,7 +91,7 @@ export default function SpeedOverTime() {
     };
 
     // Polling: Fetch data every 3 seconds
-    const interval = setInterval(fetchSpeedData, 3000);
+    const interval = setInterval(fetchSpeedData, 60000);
     return () => clearInterval(interval); // Cleanup on unmount
   }, []); // ✅ Runs only once
 
@@ -116,19 +116,15 @@ export default function SpeedOverTime() {
           </CardHeader>
 
           <CardContent className="px-2 sm:p-6">
-            {chartData.length > 0 ? (
-              <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
-                <BarChart width={600} height={300} data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="time" tickMargin={8} />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="speed" fill="hsl(var(--chart-1))" />
-                </BarChart>
-              </ChartContainer>
-            ) : (
-              <p>Waiting for speed data...</p>
-            )}
+            <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+              <BarChart width={600} height={300} data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="time" tickMargin={8} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="speed" fill="hsl(var(--chart-1))" />
+              </BarChart>
+            </ChartContainer>
           </CardContent>
         </Card>
 

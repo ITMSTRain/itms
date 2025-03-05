@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { createBrowserClient } from "@supabase/ssr"; // ✅ CORRECT SUPABASE CLIENT
+import { createBrowserClient } from "@supabase/ssr";
 
 // ShadCN components
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,7 @@ const LoginPage = () => {
     setErrors({});
   
     try {
+      // Authenticate user with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -54,52 +55,65 @@ const LoginPage = () => {
   
       if (error) {
         setErrors((prev) => ({ ...prev, general: error.message }));
-      } else {
-        console.log("Login successful:", data);
-  
-        // Log user activity in the database
-        const { data: logData, error: logError } = await supabase
-          .from("userlogs") // Ensure this matches the actual table name
-          .insert({
-            Email: formData.email, 
-            TimeIn: new Date().toISOString(), // Logs timestamp
-          })
-          .select();
-  
-        if (logError) {
-          console.error("Error logging user activity:", logError.message);
-        } else {
-          console.log("User login logged successfully:", logData);
-        }
-  
-        window.location.href = "/home"; // Redirect after login
+        setIsLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      setErrors((prev) => ({ ...prev, general: "Something went wrong. Please try again." }));
+  
+      console.log("Login successful:", data);
+  
+      // Fetch MAC address with error handling
+      const res = await fetch("/api/mac");
+  
+      if (!res.ok) {
+        throw new Error(`Failed to fetch MAC address: ${res.status} ${res.statusText}`);
+      }
+  
+      const macData = await res.json();
+  
+      if (!macData.macs || macData.macs.length === 0) {
+        throw new Error("No valid MAC address found.");
+      }
+  
+      const macAddress = macData.macs[0]; // Use the first valid MAC address
+      console.log("MAC Address:", macAddress);
+  
+      // Insert login log into Supabase
+      const { error: logError } = await supabase.from("userlogs").insert({
+        Email: formData.email,
+        TimeIn: new Date().toISOString(),
+        mac_address: macAddress,
+      });
+  
+      if (logError) {
+        throw new Error(`Error logging user activity: ${logError.message}`);
+      }
+  
+      console.log("User activity logged successfully");
+      window.location.href = "/home"; // Redirect after login
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setErrors((prev) => ({ ...prev, general: err.message || "Something went wrong. Please try again." }));
     } finally {
       setIsLoading(false);
     }
   };
   
-
+  
 
   const isFormValid = validateEmail(formData.email) && validatePassword(formData.password);
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Blank Header */}
       <header className="h-16 bg-[#343A40]"></header>
 
       <main className="flex-grow flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="w-full max-w-md bg-white rounded-xl shadow-2xl shadow-black/70 p-8">
+        <Card className="w-full max-w-md bg-white rounded-xl shadow-2xl shadow-black/70 p-6 sm:p-8">
           <div className="flex flex-col items-center mb-6">
-            <img src="/img/logo.png" alt="Road Guard Logo" className="h-20 w-20 object-contain mb-2" />
-            <h1 className="text-3xl font-bold text-gray-800">ROAD GUARD</h1>
+            <img src="/img/Vision-Drive.png" alt="Vision Drive Logo" className="w-100 h-100 mb-2" />
           </div>
 
           <CardHeader>
-            <CardTitle className="text-center text-3xl font-bold text-gray-900">
+            <CardTitle className="text-center text-2xl sm:text-3xl font-bold text-gray-900">
               Welcome Back
             </CardTitle>
             <p className="text-center text-gray-600">Sign in to your account</p>
@@ -119,7 +133,7 @@ const LoginPage = () => {
                   onChange={handleInputChange}
                   className={errors.email ? "border-red-300" : "border-gray-300"}
                 />
-                {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email}</p>}
+                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
               </div>
 
               <div>
@@ -143,7 +157,7 @@ const LoginPage = () => {
                     {showPassword ? <FaEyeSlash className="text-gray-400" /> : <FaEye className="text-gray-400" />}
                   </button>
                 </div>
-                {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password}</p>}
+                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
               </div>
 
               {errors.general && <p className="text-sm text-red-600 text-center">{errors.general}</p>}
@@ -157,26 +171,18 @@ const LoginPage = () => {
               <Button
                 type="submit"
                 disabled={!isFormValid || isLoading}
-                className={`w-full py-2 px-4 rounded-md text-sm font-medium text-white ${
-                  isFormValid ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-400"
+                className={`w-full py-2 px-4 rounded-md text-sm font-medium text-white transition ${
+                  isFormValid ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-400 cursor-not-allowed"
                 }`}
               >
                 {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </form>
           </CardContent>
-
-          <div className="text-center text-sm text-gray-600">
-            Don&apos;t have an account?{" "}
-            <a href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Create new account
-            </a>
-          </div>
         </Card>
       </main>
 
-
-      <footer className="bg-[#800000] text-white text-center py-4">
+      <footer className="bg-[#800000] text-white text-center py-4 text-sm">
         © 2025 Batangas State University. All rights reserved.
       </footer>
     </div>

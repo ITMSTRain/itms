@@ -1,19 +1,32 @@
-'use client';
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { User } from "@supabase/supabase-js";
 
-import { useRouter } from 'next/navigation';
-import React from 'react'
-
-export default function Landing() {
+export default function HomePage() {
   const router = useRouter();
+  const supabase = createClient();
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
 
-  return (
-    <main className="flex h-screen items-center justify-center bg-gray-900">
-      <button 
-        type="button" 
-        onClick={() => router.push('/login')}
-        className="px-6 py-3 text-lg font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all"
-      >start
-      </button>
-    </main>
-  );
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: session } = await supabase.auth.getSession();
+
+      if (!session?.session) {
+        router.push("/login"); // 🚫 Redirect if not logged in
+      } else {
+        setUser(session.session.user); // ✅ Allow access
+      }
+
+      setLoading(false);
+    };
+
+    checkUser();
+  }, [supabase, router]);
+
+  if (loading) return <p>Loading...</p>; // Prevents flicker
+
+  return <h1>Welcome to Home, {user?.email}!</h1>;
 }

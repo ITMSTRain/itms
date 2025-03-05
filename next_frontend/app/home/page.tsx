@@ -109,8 +109,8 @@ const CameraSurveillanceDashboard: React.FC = () => {
     }
   };
 
-  const handleSaveCameraName = (name: string, api: string) => {
-    setCameraNames((prevNames) => [...prevNames, { name, api }]);
+  const handleSaveCameraName = (name: string) => {
+    setCameraNames((prevNames) => [...prevNames]);
   };
 
   const handleDeleteCamera = (index: number) => {

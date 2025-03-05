@@ -42,7 +42,7 @@ const AboutPage = () => {
           }`}
         >
           <h1 className="text-5xl md:text-6xl font-bold mb-4">
-            About RoadGuard
+            About Vison Drive
           </h1>
           <p className="text-xl md:text-2xl max-w-2xl mx-auto px-4">
             Building safer roads through AI-powered solutions
@@ -61,11 +61,6 @@ const AboutPage = () => {
             <img
               src="/img/BSU_LOGO.png"
               alt="BSU Logo"
-              className="h-24 w-auto"
-            />
-            <img
-              src="/img/logo.png"
-              alt="RoadGuard Logo"
               className="h-24 w-auto"
             />
           </div>

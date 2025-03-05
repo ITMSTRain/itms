@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from '@/utils/supabase/client'; // ✅ Import createClient
+import { createClient } from '@/utils/supabase/client'; 
 
 interface AddCameraProps {
-  onSave: (cameraName: string, cameraAPI: string) => void;
+  onSave: (cameraName: string) => void;
 }
 
 export default function AddCamera({ onSave }: AddCameraProps) {
@@ -38,8 +38,7 @@ export default function AddCamera({ onSave }: AddCameraProps) {
           console.error("Error adding camera to database:", error);
         } else {
           console.log("Camera added:", data);
-          onSave(cameraName, cameraAPI);
-          setOpen(false);
+          onSave(cameraName);
         }
       } catch (err) {
         console.error("Unexpected error:", err);

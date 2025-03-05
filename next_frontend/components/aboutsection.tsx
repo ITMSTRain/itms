@@ -8,11 +8,7 @@ const AboutSection: React.FC = () => {
         Our Story
       </h2>
       <p className="text-lg text-gray-600 leading-relaxed hover:text-gray-800 transition-colors duration-300 mb-8">
-        RoadGuard (Real-time Optical Analysis and Detection for Governance Using
-        AI to Reinforce Driving) was developed in response to growing traffic
-        challenges. Leveraging AI and real-time data processing, it aims to
-        improve traffic safety, congestion, and law enforcement through smarter,
-        data-driven solutions.
+      Vision Drive: An AI-Driven System for Traffic Monitoring, Vehicle Classification, and Pedestrian Tracking in Batangas City was developed in response to growing traffic challenges. Leveraging AI and real-time data processing, it aims to improve traffic safety, congestion, and law enforcement through smarter, data-driven solutions.
       </p>
 
       {/* Our Mission */}
@@ -20,7 +16,7 @@ const AboutSection: React.FC = () => {
         Our Mission
       </h2>
       <p className="text-lg text-gray-600 leading-relaxed hover:text-gray-800 transition-colors duration-300">
-        RoadGuard is committed to enhancing road safety and traffic management
+        Vision Drive is committed to enhancing road safety and traffic management
         by:
       </p>
       <ul className="flex flex-wrap justify-center gap-8 text-gray-600 my-4 text-left">

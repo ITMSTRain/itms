@@ -42,6 +42,7 @@ const SignUpPage = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  
 
   const signUpNewUser = async () => {
     const { data, error } = await supabase.auth.signUp({

@@ -38,7 +38,7 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-app.mount("/web2025", StaticFiles(directory="web2025"), name="web2025")
+# Add CORS middleware to allow cross-origin requests
 
 app.add_middleware(
     CORSMiddleware,
@@ -50,15 +50,19 @@ app.add_middleware(
 load_dotenv()
 
 # Load the YOLO model
-model = YOLO('94%.pt')
+model = YOLO(r'..\model_feb\94%.pt')
 
 # Check for CUDA availability
 if not torch.cuda.is_available():
-    print(torch.cuda.get_device_properties)
-    sys.exit(1)
+    print("CUDA is not available.")
+    device = 'cuda'
+    model.to(device)
 
-device = 'cuda'
-model.to(device)
+else:
+    print("CUDA is available.")
+    print(torch.cuda.get_device_properties(0))
+
+
 
 # Class ID to name mapping
 class_names = {0: 'Bus', 1: 'Car', 2: 'Jeep', 3: 'Motorcycle', 4: 'Person', 5: 'Tricycle', 6: 'Truck', 7: 'Van'}
@@ -256,17 +260,15 @@ async def process_video(video_path, speed_calculator, latest_speed_store, websoc
                             rounded_speed = round(speed, 2)
                             latest_speed_store[id] = rounded_speed
                             display_speed = rounded_speed
+                            # Check if the vehicle has already crossed the blue line
+                            if class_id in allowed_classes:
+                                if class_id not in crossed_vehicles:  # Only count the vehicle once
+                                    vehicle_classifications_PB[class_id] += 1
                         else:
                             display_speed = latest_speed_store.get(id, 0)
 
-                        # Check if the vehicle has already crossed the blue line
-                        if class_id in allowed_classes:
-                            if r'video_samples\3.mp4' in video_path: 
-                                if class_id not in crossed_vehicles:  # Only count the vehicle once
-                                    vehicle_classifications_PB[class_id] += 1
-                            elif r'video_samples\1.mp4' in video_path:
-                                if class_id not in crossed_vehicles:
-                                    vehicle_classifications_BSU[class_id] += 1
+                        
+
 
                 class_name = class_names.get(int(class_id), "Unknown")
                 cv2.putText(frame, f"{class_name} Speed: {display_speed:.2f} km/h", 

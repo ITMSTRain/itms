@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiHome, FiSearch, FiFilter } from "react-icons/fi";
-import { createBrowserClient } from "@supabase/ssr"; 
-import { Button } from "@/components/ui/button"; 
-import { Input } from "@/components/ui/input"; 
-import { Table, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table"; 
+import { createBrowserClient } from "@supabase/ssr";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table";
 
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,7 +14,9 @@ const supabase = createBrowserClient(
 
 const AttendanceLogs = () => {
   const router = useRouter();
-  const [logs, setLogs] = useState<{ Email: string; TimeIn: string; TimeOut: string }[]>([]);
+  const [logs, setLogs] = useState<
+    { Email: string; TimeIn: string; TimeOut: string; mac_address: string }[]
+  >([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("");
 
@@ -22,14 +24,14 @@ const AttendanceLogs = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       const { data, error } = await supabase
-        .from("userlogs") // ✅ Fetch directly from table
-        .select("*") // Select all columns
-        .order("TimeIn", { ascending: false }); // Order by latest login
-    
+        .from("userlogs") // ✅ Fetch from table
+        .select("Email, TimeIn, TimeOut, mac_address") // 🔥 Now includes `mac_address`
+        .order("TimeIn", { ascending: false });
+
       if (error) {
         console.error("Error fetching logs:", error.message);
       } else {
-        console.log("Fetched logs:", data); // 🔍 Debugging
+        console.log("Fetched logs:", data); // Debugging
         setLogs(data);
       }
     };
@@ -38,9 +40,10 @@ const AttendanceLogs = () => {
   }, []);
 
   // 🔹 Filter logs based on search and date
-  const filteredLogs = logs.filter((log) =>
-    log["Email"].toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (!dateFilter || log["TimeIn"].startsWith(dateFilter))
+  const filteredLogs = logs.filter(
+    (log) =>
+      log["Email"].toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (!dateFilter || log["TimeIn"].startsWith(dateFilter))
   );
 
   return (
@@ -83,6 +86,7 @@ const AttendanceLogs = () => {
                 <TableCell>Email</TableCell>
                 <TableCell>Time In</TableCell>
                 <TableCell>Time Out</TableCell>
+                <TableCell>MAC Address</TableCell> {/* 🔥 New Column */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -92,11 +96,12 @@ const AttendanceLogs = () => {
                     <TableCell>{log["Email"]}</TableCell>
                     <TableCell>{log["TimeIn"] ? new Date(log["TimeIn"]).toLocaleString() : "-"}</TableCell>
                     <TableCell>{log["TimeOut"] ? new Date(log["TimeOut"]).toLocaleString() : "-"}</TableCell>
+                    <TableCell>{log["mac_address"] || "Unknown"}</TableCell> {/* 🔥 Display MAC */}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-gray-500">
+                  <TableCell colSpan={4} className="text-center text-gray-500">
                     No logs found
                   </TableCell>
                 </TableRow>
