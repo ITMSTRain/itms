@@ -99,9 +99,6 @@ const Header: React.FC<HeaderProps> = ({ onGridChange, onFullScreenClick, onSave
               </SheetHeader>
 
               <div className="flex flex-col gap-4 mt-4">
-                <Button variant="outline" className="w-full" onClick={() => navigateTo("/dashboard")}>
-                  Go to Dashboard
-                </Button>
                 <Button variant="outline" className="w-full" onClick={() => navigateTo("/userlogs")}>
                   User Logs
                 </Button>
