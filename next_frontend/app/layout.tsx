@@ -9,7 +9,8 @@ export const metadata: Metadata = {
   title: "ITMS - Intelligent Traffic Management System",
   description: "A comprehensive traffic management solution",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || "https://your-production-domain.com"
+    process.env.NEXT_PUBLIC_BASE_URL ||
+      "https://steerhub.batstateu.edu.ph/stride"
   ),
   alternates: {
     canonical: "/",
