@@ -83,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({
     <header className="bg-[#EFF6FF] shadow-md p-4">
       <div className="flex items-center justify-between">
         <img
-          src="/Vision-Drive.png"
+          //Vision-Drive.png"
           alt="Vision Drive Logo"
           className="h-16 object-contain"
         />

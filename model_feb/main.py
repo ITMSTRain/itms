@@ -67,18 +67,21 @@ app.add_middleware(
 # Load the YOLO model
 model = YOLO(r'..\model_feb\94%.pt')
 
-# Check for CUDA availability
-if not torch.cuda.is_available():
-    print("CUDA is not available.")
-    device = model.device
-    print(f"🔥 YOLO is running on: {device}")    
+device = model.device
+print(f"YOLO is running on: {device}")
+
+# # Check for CUDA availability
+# if not torch.cuda.is_available():
+#     print("CUDA is not available.")
+#     device = model.device
+#     print(f"YOLO is running on: {device}")    
    
 
-else:
-    print("CUDA is available.")
-    device = 'cuda'
-    model.to(device)
-    print(torch.cuda.get_device_properties(0))
+# else:
+#     print("CUDA is available.")
+#     device = 'cuda'
+#     model.to(device)
+#     print(torch.cuda.get_device_properties(0))
 
     
 

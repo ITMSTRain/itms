@@ -87,7 +87,7 @@ class SpeedCalculator:
         return None, None, None
 
     def calculate_kmh(self, elapsed_time):
-        speed_mps = (self.distance / elapsed_time) / 2
+        speed_mps = (self.distance / elapsed_time) 
         speed_kmh = speed_mps * 3.6
         return speed_kmh
 

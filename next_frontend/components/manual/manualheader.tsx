@@ -19,7 +19,7 @@ export default function ManualHeader({ onSearch }: ManualHeaderProps) {
       {/* Logo Banner */}
       <div className="flex-shrink-0">
         <Image
-          src="/Vision-Drive.png"
+          //Vision-Drive.png"
           alt="Vision Drive"
           width={200} // Adjust width as needed
           height={50} // Adjust height as needed

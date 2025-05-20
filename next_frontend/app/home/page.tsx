@@ -169,7 +169,7 @@ const CameraSurveillanceDashboard: React.FC = () => {
     }
 
     let ws = new WebSocket(
-      `ws://${process.env.NEXT_PUBLIC_WS_BASE_URL}/ws/videos/${cameraName}`
+      `ws://${process.env.NEXT_PUBLIC_WS_BASE_URL}/ws/videos/${cameraName}` //change ws to wss if using https
     );
     activeStreams[cameraName] = ws;
 

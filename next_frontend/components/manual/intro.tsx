@@ -13,7 +13,7 @@ export default function Introduction({ onNext }: { onNext: () => void }) {
 
         <div className="mb-4">
           <Image
-            src="/Vision-Drive.png"
+            //Vision-Drive.png"
             alt="Vision Drive"
             width={600}
             height={400}
