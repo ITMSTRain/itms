@@ -31,7 +31,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
 
 // API URL for HTTP polling
-const API_URL = "http://127.0.0.1:8000/PB_latest_speed"; // ✅ Ensure this matches your backend
+const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/PB_latest_speed`; // ✅ Ensure this matches your backend
 
 const chartConfig = {
   speed: {
@@ -60,7 +60,7 @@ export default function SpeedOverTime() {
       try {
         console.log("🔄 Fetching speed data...");
         const response = await fetch(API_URL);
-        
+
         if (!response.ok) throw new Error("❌ Failed to fetch speed data");
 
         const data: SpeedDataResponse = await response.json();
@@ -68,18 +68,25 @@ export default function SpeedOverTime() {
         console.log("✅ Received data:", data);
 
         if (data.latest_speed && Object.keys(data.latest_speed).length > 0) {
-          const speedValues: number[] = Object.values(data.latest_speed).map((speed) => Number(speed));
+          const speedValues: number[] = Object.values(data.latest_speed).map(
+            (speed) => Number(speed)
+          );
 
-          const avgSpeed = speedValues.length > 0
-            ? speedValues.reduce((a: number, b: number) => a + b, 0) / speedValues.length
-            : 0;
+          const avgSpeed =
+            speedValues.length > 0
+              ? speedValues.reduce((a: number, b: number) => a + b, 0) /
+                speedValues.length
+              : 0;
 
           console.log("📈 Calculated average speed:", avgSpeed);
 
           setChartData((prevData) => {
             const newData = [
               ...prevData.slice(-19), // Keep last 20 entries
-              { time: new Date().toLocaleTimeString().slice(0, 5), speed: avgSpeed }
+              {
+                time: new Date().toLocaleTimeString().slice(0, 5),
+                speed: avgSpeed,
+              },
             ];
             console.log("📉 Updated Chart Data:", newData);
             return newData;
@@ -116,7 +123,10 @@ export default function SpeedOverTime() {
           </CardHeader>
 
           <CardContent className="px-2 sm:p-6">
-            <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+            <ChartContainer
+              config={chartConfig}
+              className="aspect-auto h-[250px] w-full"
+            >
               <BarChart width={600} height={300} data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" tickMargin={8} />

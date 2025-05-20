@@ -3,6 +3,7 @@ from ultralytics import YOLO
 import torch
 import sys
 import time
+import json
 import asyncio
 from speed_calculator import SpeedCalculator
 import os
@@ -35,20 +36,34 @@ import os
 
 from pydantic import BaseModel
 
+load_dotenv()  # Load values from .env
+
+
+# Parse JSON string from .env
+try:
+    allowed_origins = json.loads(os.getenv("ALLOWED_ORIGINS", "[]"))
+except json.JSONDecodeError:
+    raise ValueError("Invalid JSON in ALLOWED_ORIGINS environment variable")
+
+# Make sure it's a list of strings
+if not isinstance(allowed_origins, list) or not all(isinstance(origin, str) for origin in allowed_origins):
+    raise TypeError("ALLOWED_ORIGINS must be a JSON array of strings")
+
 
 app = FastAPI()
 
-# Add CORS middleware to allow cross-origin requests
+
+origins = os.getenv("ALLOWED_ORIGINS", "")
+allowed_origins = [origin.strip() for origin in origins.split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8080", "http://localhost:8080", "http://localhost:3000"],  # You can restrict this to specific origins like ["http://localhost"]
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-load_dotenv()
-
+    
 # Load the YOLO model
 model = YOLO(r'..\model_feb\94%.pt')
 

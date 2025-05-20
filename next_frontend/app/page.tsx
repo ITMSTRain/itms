@@ -1,32 +1,20 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { Metadata } from "next";
 
-export default function HomePage() {
-  const router = useRouter();
-  const supabase = createClient();
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+export const metadata: Metadata = {
+  title: "Road Guard - Home",
+  description: "Road and Vehicle Web Surveillance System",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+  ),
+};
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: session } = await supabase.auth.getSession();
-
-      if (!session?.session) {
-        router.push("/login"); // 🚫 Redirect if not logged in
-      } else {
-        setUser(session.session.user); // ✅ Allow access
-      }
-
-      setLoading(false);
-    };
-
-    checkUser();
-  }, [supabase, router]);
-
-  if (loading) return <p>Loading...</p>; // Prevents flicker
-
-  return <h1>Welcome to Home, {user?.email}!</h1>;
+export default function Home() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+      <h1 className="text-4xl font-bold mb-4">Road Guard</h1>
+      <p className="text-xl text-gray-600">
+        Road and Vehicle Web Surveillance System
+      </p>
+    </main>
+  );
 }

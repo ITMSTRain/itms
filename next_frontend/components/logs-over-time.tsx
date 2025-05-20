@@ -18,7 +18,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 
 import {
   ChartConfig,
@@ -31,7 +31,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
 
 // API URL for HTTP polling
-const API_URL = "http://127.0.0.1:8000/PB_vehicle_classifications"; // ✅ Fetch vehicle classifications
+const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL!}/PB_vehicle_classifications`; // ✅ Fetch vehicle classifications
 
 const vehicleChartConfig = {
   Bus: { label: "Bus", color: "hsl(var(--chart-1))" },
@@ -62,10 +62,12 @@ export default function LogsOverTime() {
         console.log("✅ Received data:", data);
 
         if (data.vehicle_classifications) {
-          const formattedData = Object.keys(data.vehicle_classifications).map((key) => ({
-            type: key,
-            count: data.vehicle_classifications[key],
-          }));
+          const formattedData = Object.keys(data.vehicle_classifications).map(
+            (key) => ({
+              type: key,
+              count: data.vehicle_classifications[key],
+            })
+          );
 
           console.log("📊 Formatted Chart Data:", formattedData);
           setChartData(formattedData);
@@ -89,7 +91,9 @@ export default function LogsOverTime() {
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>Logs Over Time</DrawerTitle>
-          <DrawerDescription>Live vehicle classification updates</DrawerDescription>
+          <DrawerDescription>
+            Live vehicle classification updates
+          </DrawerDescription>
         </DrawerHeader>
 
         <Card className="border border-gray-400">
@@ -99,20 +103,21 @@ export default function LogsOverTime() {
               <CardDescription>Showing real-time vehicle logs</CardDescription>
             </div>
           </CardHeader>
-
           <CardContent className="px-2 sm:p-6">
-    
-              <ChartContainer config={vehicleChartConfig} className="aspect-auto h-[250px] w-full">
-                <BarChart width={600} height={300} data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="type" tickMargin={8} />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="hsl(var(--chart-1))" />
-                </BarChart>
-              </ChartContainer>
-            
-          </CardContent>``
+            <ChartContainer
+              config={vehicleChartConfig}
+              className="aspect-auto h-[250px] w-full"
+            >
+              <BarChart width={600} height={300} data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="type" tickMargin={8} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="hsl(var(--chart-1))" />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+          ``
         </Card>
 
         <DrawerFooter>

@@ -36,7 +36,7 @@ export function ClassType() {
 
   const sendPostRequest = async (updatedValues: string[]) => {
     try {
-      await fetch("http://127.0.0.1:8000/update_classes", {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/update_classes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -86,7 +86,11 @@ export function ClassType() {
             {selectedValues.length > 0
               ? selectedValues
                   .slice(0, maxDisplayed)
-                  .map((value) => classifications.find((item) => item.value === value)?.label)
+                  .map(
+                    (value) =>
+                      classifications.find((item) => item.value === value)
+                        ?.label
+                  )
                   .join(", ") +
                 (selectedValues.length > maxDisplayed ? "..." : "")
               : "Select class type..."}
@@ -99,12 +103,17 @@ export function ClassType() {
               <CommandEmpty>No class found.</CommandEmpty>
               <CommandGroup>
                 {classifications.map((item) => (
-                  <CommandItem key={item.value} onSelect={() => handleSelect(item.value)}>
+                  <CommandItem
+                    key={item.value}
+                    onSelect={() => handleSelect(item.value)}
+                  >
                     {item.label}
                     <Check
                       className={cn(
                         "ml-auto h-4 w-4",
-                        selectedValues.includes(item.value) ? "opacity-100" : "opacity-0"
+                        selectedValues.includes(item.value)
+                          ? "opacity-100"
+                          : "opacity-0"
                       )}
                     />
                   </CommandItem>

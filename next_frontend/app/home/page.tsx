@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import Header from "@/components/header";
 import Sidebar from "@/components/sidebar";
 import VideoGrid from "@/components/videogrid";
-import { fetchVideoNames } from "../actions";
+import { useVideoActions } from "../client-actions";
 
 const CameraSurveillanceDashboard: React.FC = () => {
   const [gridSize, setGridSize] = useState<number>(4);
@@ -16,39 +16,54 @@ const CameraSurveillanceDashboard: React.FC = () => {
     lastClickTime: 0,
   });
 
-  // ✅ Now holds objects with name and api
-  const [cameraNames, setCameraNames] = useState<{ name: string; api: string }[]>([]);
+  const [cameraNames, setCameraNames] = useState<
+    { name: string; api: string }[]
+  >([]);
   const videoRefs = useRef<(HTMLImageElement | null)[]>([]);
+  const { fetchVideoNames } = useVideoActions();
+  const [isClient, setIsClient] = useState(false);
 
-
+  // Only run client-side code after mount
+  useEffect(() => {
+    setIsClient(true);
+    handleReloadCamera();
+  }, []);
 
   // ✅ Strongly typed grid options
   type GridOption = "1x1" | "2x2" | "3x3" | "4x4";
 
   const handleGridChange = (value: string) => {
-    const sizes: Record<GridOption, number> = { "1x1": 1, "2x2": 4, "3x3": 9, "4x4": 16 };
+    const sizes: Record<GridOption, number> = {
+      "1x1": 1,
+      "2x2": 4,
+      "3x3": 9,
+      "4x4": 16,
+    };
 
-    // ✅ Use a type guard to validate the key
     if (["1x1", "2x2", "3x3", "4x4"].includes(value)) {
       setGridSize(sizes[value as GridOption]);
     } else {
-      setGridSize(1); // Fallback in case of unexpected value
+      setGridSize(1);
     }
   };
 
   const handleCameraClick = (cameraName: string) => {
+    if (!isClient) return; // Don't run WebSocket code during static generation
+
     if (selectedVideo !== null) {
-      console.log(`🔥 Streaming Camera ${cameraName} into Video ${selectedVideo}`);
-      startStream(cameraName, selectedVideo); // 🔥 THIS LINE STARTS THE STREAM
+      console.log(
+        `🔥 Streaming Camera ${cameraName} into Video ${selectedVideo}`
+      );
+      startStream(cameraName, selectedVideo);
     } else {
       console.warn(`🚨 No video slot selected! Choose a video first.`);
     }
   };
-  
-  
 
   const handleVideoClick = useCallback(
     (index: number) => {
+      if (!isClient) return;
+
       const currentTime = Date.now();
       const timeDifference = currentTime - clickState.lastClickTime;
 
@@ -67,10 +82,12 @@ const CameraSurveillanceDashboard: React.FC = () => {
         setClickState({ count: 1, lastClickTime: currentTime });
       }
     },
-    [clickState]
+    [clickState, isClient]
   );
 
   const handleVideoDoubleClick = (index: number) => {
+    if (!isClient) return;
+
     const videoElement = videoRefs.current[index];
     if (videoElement) {
       videoElement.requestFullscreen().catch((err) => {
@@ -80,6 +97,8 @@ const CameraSurveillanceDashboard: React.FC = () => {
   };
 
   const handleVideoExitFullscreen = () => {
+    if (!isClient) return;
+
     if (document.fullscreenElement) {
       document.exitFullscreen().catch((err) => {
         console.error("Failed to exit fullscreen:", err);
@@ -88,8 +107,9 @@ const CameraSurveillanceDashboard: React.FC = () => {
   };
 
   const handleGridFullScreen = () => {
-    const gridContainer = document.getElementById("video-grid");
+    if (!isClient) return;
 
+    const gridContainer = document.getElementById("video-grid");
     if (!gridContainer) {
       console.error("Grid container not found");
       return;
@@ -116,16 +136,17 @@ const CameraSurveillanceDashboard: React.FC = () => {
   const handleDeleteCamera = (index: number) => {
     setCameraNames((prevNames) => prevNames.filter((_, i) => i !== index));
   };
+
   const handleReloadCamera = async () => {
+    if (!isClient) return;
+
     try {
       const data = await fetchVideoNames();
-  
       const newCameras = data.map((item: { video_name: string }) => ({
         name: item.video_name,
-        api: "", // Ensuring API field exists to avoid type errors
+        api: "",
       }));
-  
-      setCameraNames(newCameras); // 🔥 Clears list before updating with fresh data
+      setCameraNames(newCameras);
     } catch (error) {
       console.error("Error fetching video names:", error);
     }
@@ -134,43 +155,48 @@ const CameraSurveillanceDashboard: React.FC = () => {
   const activeStreams: Record<string, WebSocket> = {};
 
   const startStream = (cameraName: string, videoIndex: number) => {
+    if (!isClient) return;
+
     if (activeStreams[cameraName]) {
       console.warn(`🚨 Already streaming ${cameraName}`);
       return;
     }
-  
+
     function reconnect() {
       console.log(`🔄 Reconnecting ${cameraName}...`);
       delete activeStreams[cameraName];
       setTimeout(() => startStream(cameraName, videoIndex), 3000);
     }
-  
-    let ws = new WebSocket(`ws://127.0.0.1:8000/ws/videos/${cameraName}`);
+
+    let ws = new WebSocket(
+      `${process.env.NEXT_PUBLIC_WS_BASE_URL}/${cameraName}`
+    );
     activeStreams[cameraName] = ws;
-  
+
     ws.binaryType = "blob";
     ws.onmessage = async (event) => {
       let blob = event.data;
-      let bitmap = await createImageBitmap(blob); // 🔥 Convert blob to an image
+      let bitmap = await createImageBitmap(blob);
       let imgElement = videoRefs.current[videoIndex];
 
       if (imgElement) {
         let imgUrl = URL.createObjectURL(blob);
-        imgElement.src = imgUrl; // Set image source
-        imgElement.onload = () => URL.revokeObjectURL(imgUrl); // Prevent memory leaks
+        imgElement.src = imgUrl;
+        imgElement.onload = () => URL.revokeObjectURL(imgUrl);
       }
-
     };
-  
+
     ws.onclose = () => {
       console.warn(`🚨 WebSocket for ${cameraName} closed!`);
       reconnect();
     };
   };
-  
-  
-  
-  
+
+  // Don't render the component during static generation
+  if (!isClient) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Header
