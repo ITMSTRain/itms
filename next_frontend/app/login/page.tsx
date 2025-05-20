@@ -108,7 +108,7 @@ const LoginPage = () => {
         <Card className="w-full max-w-md bg-white rounded-xl shadow-2xl shadow-black/70 p-6 sm:p-8">
           <div className="flex flex-col items-center mb-6">
             <img
-              src="/img/Vision-Drive.png"
+              src="/Vision-Drive.png"
               alt="Vision Drive Logo"
               className="w-100 h-100 mb-2"
             />

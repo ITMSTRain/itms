@@ -33,7 +33,7 @@ const AboutPage = () => {
       {/* Hero Section */}
       <div
         className="relative h-[60vh] bg-cover bg-center flex items-center justify-center"
-        style={{ backgroundImage: "url('/img/BSU2.png')" }}
+        style={{ backgroundImage: "url('/BSU2.png')" }}
       >
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div
@@ -58,11 +58,7 @@ const AboutPage = () => {
         <div className="flex flex-col md:flex-row justify-between items-center md:items-start w-full">
           {/* Logos */}
           <div className="flex items-center gap-4 mb-4 md:mb-0">
-            <img
-              src="/img/BSU_LOGO.png"
-              alt="BSU Logo"
-              className="h-24 w-auto"
-            />
+            <img src="/BSU_LOGO.png" alt="BSU Logo" className="h-24 w-auto" />
           </div>
 
           {/* Copyright (inline) */}

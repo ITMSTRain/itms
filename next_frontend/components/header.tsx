@@ -9,7 +9,13 @@ import { FullScreenButton } from "@/components/fullscreen-button";
 import SpeedOverTime from "@/components/speed-over-time";
 import LogsOverTime from "@/components/logs-over-time";
 import { createBrowserClient } from "@supabase/ssr";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { FaUserCircle } from "react-icons/fa";
 
@@ -24,7 +30,11 @@ interface HeaderProps {
   onSave: (cameraName: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onGridChange, onFullScreenClick, onSave }) => {
+const Header: React.FC<HeaderProps> = ({
+  onGridChange,
+  onFullScreenClick,
+  onSave,
+}) => {
   const router = useRouter();
   const [userImage, setUserImage] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("Loading...");
@@ -59,7 +69,8 @@ const Header: React.FC<HeaderProps> = ({ onGridChange, onFullScreenClick, onSave
         .eq("Email", userEmail)
         .is("TimeOut", null);
 
-      if (updateError) console.error("Error updating logout time:", updateError);
+      if (updateError)
+        console.error("Error updating logout time:", updateError);
 
       await supabase.auth.signOut();
       router.push("/login");
@@ -71,7 +82,11 @@ const Header: React.FC<HeaderProps> = ({ onGridChange, onFullScreenClick, onSave
   return (
     <header className="bg-[#EFF6FF] shadow-md p-4">
       <div className="flex items-center justify-between">
-        <img src="/img/Vision-Drive.png" alt="Vision Drive Logo" className="h-16 object-contain" />
+        <img
+          src="/Vision-Drive.png"
+          alt="Vision Drive Logo"
+          className="h-16 object-contain"
+        />
 
         <div className="flex items-center space-x-4">
           <ComboboxDemo onChange={onGridChange} />
@@ -95,20 +110,38 @@ const Header: React.FC<HeaderProps> = ({ onGridChange, onFullScreenClick, onSave
             </SheetTrigger>
             <SheetContent side="right">
               <SheetHeader>
-                <SheetTitle className="text-lg font-bold">{userEmail}</SheetTitle>
+                <SheetTitle className="text-lg font-bold">
+                  {userEmail}
+                </SheetTitle>
               </SheetHeader>
 
               <div className="flex flex-col gap-4 mt-4">
-                <Button variant="outline" className="w-full" onClick={() => navigateTo("/userlogs")}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigateTo("/userlogs")}
+                >
                   User Logs
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => navigateTo("/user-guide")}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigateTo("/user-guide")}
+                >
                   User Guide
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => navigateTo("/about")}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigateTo("/about")}
+                >
                   About
                 </Button>
-                <Button variant="destructive" className="w-full" onClick={signOut}>
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={signOut}
+                >
                   Sign Out
                 </Button>
               </div>
