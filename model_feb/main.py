@@ -134,7 +134,7 @@ pb_roi = np.array([
 ])
 
 tracker = Tracker()
-DESIRED_FPS = 30
+DESIRED_FPS = 10  # Lowered from 30 to 10 for reduced CPU usage
 
 latest_speed_bsu = {}
 latest_speed_PB = {}
@@ -398,6 +398,11 @@ async   def favicon():
         return FileResponse(favicon_path)
     # Fallback: Redirect or return a default response
     return RedirectResponse(url="https://fastapi.tiangolo.com/img/favicon.png")
+
+# INSTRUCTIONS: For best performance on your 10-core CPU, run the server with multiple workers:
+# Example (run in terminal):
+# uvicorn main:app --host 0.0.0.0 --port 8000 --workers 6
+# You can adjust --workers (4-8 is a good range for your hardware)
 
 def start_server() -> None:
     uvicorn.run("main:app", host="0.0.0.0", port=8000, timeout_keep_alive=30)
