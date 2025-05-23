@@ -22,6 +22,7 @@ interface VideoGridProps {
   videoRefs: React.RefObject<(HTMLImageElement | null)[]>;
   cameraNames: string[];
   videoActive: boolean[];
+  miniSpeedData?: { [camera: string]: { time: string; speed: number }[] };
 }
 
 const VideoGrid: React.FC<VideoGridProps> = ({
@@ -32,6 +33,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   videoRefs,
   cameraNames,
   videoActive,
+  miniSpeedData = {},
 }) => {
   const [activeVideoStats, setActiveVideoStats] = useState<number | null>(null);
 
@@ -151,7 +153,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
                       <MiniSpeedChart
                         cameraName={cameraName}
                         isActive={isActive}
-                        data={speedHistory[cameraName]}
+                        data={miniSpeedData[cameraName]}
                       />
                     </div>
                   </div>

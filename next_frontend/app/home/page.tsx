@@ -6,11 +6,8 @@ import VideoGrid from "@/components/videogrid";
 import { useVideoActions } from "../client-actions";
 import MiniSpeedChart from "@/components/mini-speed-chart";
 import MiniClassChart from "@/components/mini-class-chart";
+import { createClient } from "../../utils/supabase/client";
 
-const SPEED_ENDPOINTS = {
-  bsu: `${process.env.NEXT_PUBLIC_BACKEND_URL}/bsu_latest_speed`,
-  pb: `${process.env.NEXT_PUBLIC_BACKEND_URL}/PB_latest_speed`,
-};
 const CLASS_ENDPOINTS = {
   bsu: `${process.env.NEXT_PUBLIC_BACKEND_URL}/BSU_vehicle_classifications`,
   pb: `${process.env.NEXT_PUBLIC_BACKEND_URL}/PB_vehicle_classifications`,
@@ -36,6 +33,8 @@ const dummySpeedData = [
 ];
 const dummyClassData = VEHICLE_TYPES.map((type) => ({ type, count: 0 }));
 
+const supabase = createClient();
+
 const CameraSurveillanceDashboard: React.FC = () => {
   const [gridSize, setGridSize] = useState<number>(4);
   const [selectedVideo, setSelectedVideo] = useState<number | null>(null);
@@ -55,9 +54,12 @@ const CameraSurveillanceDashboard: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
   const [videoActive, setVideoActive] = useState<boolean[]>([]);
   const [analyticsData, setAnalyticsData] = useState({
-    bsu: { speed: dummySpeedData, class: dummyClassData },
-    pb: { speed: dummySpeedData, class: dummyClassData },
+    bsu: { class: dummyClassData },
+    pb: { class: dummyClassData },
   });
+  const [miniSpeedData, setMiniSpeedData] = useState<{
+    [camera: string]: { time: string; speed: number }[];
+  }>({});
 
   // Only run client-side code after mount
   useEffect(() => {
@@ -243,17 +245,33 @@ const CameraSurveillanceDashboard: React.FC = () => {
     };
   };
 
+  // Add a function to fetch speed data for a given cameraName
+  async function fetchSpeedDataForCamera(cameraName: string) {
+    // Get camera_id from video_data where video_name matches cameraName
+    const { data: videoRows, error: videoError } = await supabase
+      .from("video_data")
+      .select("id")
+      .eq("video_name", cameraName)
+      .limit(1);
+    if (videoError || !videoRows || videoRows.length === 0) return [];
+    const camera_id = videoRows[0].id;
+    // Get latest 15 speed_data for this camera_id
+    const { data: speedRows, error: speedError } = await supabase
+      .from("speed_data")
+      .select("speed,created_at")
+      .eq("camera_id", camera_id)
+      .order("created_at", { ascending: false })
+      .limit(15);
+    if (speedError || !speedRows) return [];
+    // Reverse to get oldest first for chart
+    return speedRows.reverse().map((row: any) => ({
+      time: new Date(row.created_at).toLocaleTimeString(),
+      speed: Math.round(row.speed * 100) / 100,
+    }));
+  }
+
   const fetchAnalyticsData = useCallback(async () => {
     try {
-      // Speed
-      const [bsuSpeedRes, pbSpeedRes] = await Promise.all([
-        fetch(SPEED_ENDPOINTS.bsu),
-        fetch(SPEED_ENDPOINTS.pb),
-      ]);
-      const [bsuSpeedJson, pbSpeedJson] = await Promise.all([
-        bsuSpeedRes.json(),
-        pbSpeedRes.json(),
-      ]);
       // Class
       const [bsuClassRes, pbClassRes] = await Promise.all([
         fetch(CLASS_ENDPOINTS.bsu),
@@ -292,11 +310,9 @@ const CameraSurveillanceDashboard: React.FC = () => {
         }));
       setAnalyticsData((prev) => ({
         bsu: {
-          speed: getSpeedArr(bsuSpeedJson, prev.bsu.speed),
           class: getClassArr(bsuClassJson),
         },
         pb: {
-          speed: getSpeedArr(pbSpeedJson, prev.pb.speed),
           class: getClassArr(pbClassJson),
         },
       }));
@@ -308,6 +324,23 @@ const CameraSurveillanceDashboard: React.FC = () => {
     const interval = setInterval(fetchAnalyticsData, 3000);
     return () => clearInterval(interval);
   }, [fetchAnalyticsData]);
+
+  // In the main component, fetch and pass speed data to MiniSpeedChart
+  // Fetch speed data for all cameras in cameraNames
+  useEffect(() => {
+    async function fetchAllMiniSpeedData() {
+      const results: { [camera: string]: { time: string; speed: number }[] } =
+        {};
+      for (const cam of cameraNames.map((c) => c.name)) {
+        if (!cam) continue;
+        results[cam] = await fetchSpeedDataForCamera(cam);
+      }
+      setMiniSpeedData(results);
+    }
+    fetchAllMiniSpeedData();
+    const interval = setInterval(fetchAllMiniSpeedData, 10000); // Update every 10 seconds
+    return () => clearInterval(interval);
+  }, [cameraNames]);
 
   // Don't render the component during static generation
   if (!isClient) {
@@ -340,24 +373,17 @@ const CameraSurveillanceDashboard: React.FC = () => {
             videoRefs={videoRefs}
             cameraNames={cameraNames.map((c) => c.name)}
             videoActive={videoActive}
+            miniSpeedData={miniSpeedData}
           />
           {/* Mini Analytics Charts Example */}
           <div className="grid grid-cols-2 gap-4 mt-4">
-            <MiniSpeedChart
-              cameraName="bsu_road_sample"
-              isActive={true}
-              data={analyticsData.bsu.speed}
-            />
+            <MiniSpeedChart cameraName="bsu_road_sample" isActive={true} />
             <MiniClassChart
               cameraName="bsu_road_sample"
               isActive={true}
               data={analyticsData.bsu.class}
             />
-            <MiniSpeedChart
-              cameraName="pb_road_sample"
-              isActive={true}
-              data={analyticsData.pb.speed}
-            />
+            <MiniSpeedChart cameraName="pb_road_sample" isActive={true} />
             <MiniClassChart
               cameraName="pb_road_sample"
               isActive={true}

@@ -30,11 +30,6 @@ interface MiniSpeedChartProps {
   data?: { time: string; speed: number }[];
 }
 
-const apiMap: Record<string, string> = {
-  bsu_road_sample: `${process.env.NEXT_PUBLIC_BACKEND_URL}/bsu_latest_speed`,
-  pb_road_sample: `${process.env.NEXT_PUBLIC_BACKEND_URL}/PB_latest_speed`,
-};
-
 const dummyData = [
   { time: "12:00", speed: 0 },
   { time: "12:01", speed: 0 },
@@ -61,51 +56,6 @@ const MiniSpeedChart: React.FC<MiniSpeedChartProps> = ({
 
   // Use propData if provided, otherwise fallback to local state (for testing/fallback only)
   const data = propData || dataMap[cameraName] || dummyData;
-
-  useEffect(() => {
-    // If data is provided as prop, skip fetching
-    if (propData) return;
-    if (!isActive) {
-      return;
-    }
-    const fetchData = async () => {
-      if (!apiMap[cameraName]) {
-        setDataMap((prev) => ({ ...prev, [cameraName]: dummyData }));
-        return;
-      }
-      try {
-        const res = await fetch(apiMap[cameraName]);
-        if (!res.ok) throw new Error("Failed to fetch");
-        const json = await res.json();
-        if (json.latest_speed && Object.keys(json.latest_speed).length > 0) {
-          const speedValues = Object.values(json.latest_speed).map(Number);
-          // Use full time with seconds for more precise x-axis
-          const now = new Date().toLocaleTimeString();
-          setDataMap((prev) => {
-            const prevArr = prev[cameraName] || [];
-            const lastSpeed =
-              prevArr.length > 0
-                ? prevArr[prevArr.length - 1].speed
-                : undefined;
-            const newPoints = speedValues
-              .map((speed) => Math.round(speed * 100) / 100)
-              .filter((speed) => speed !== lastSpeed);
-            if (newPoints.length === 0) return prev;
-            const updatedArr = [
-              ...prevArr,
-              ...newPoints.map((speed) => ({ time: now, speed })),
-            ].slice(-200);
-            return { ...prev, [cameraName]: updatedArr };
-          });
-        }
-      } catch {
-        setDataMap((prev) => ({ ...prev, [cameraName]: dummyData }));
-      }
-    };
-    fetchData();
-    const interval = setInterval(fetchData, 5000); // Update every 5 seconds for better responsiveness
-    return () => clearInterval(interval);
-  }, [cameraName, isActive, propData]);
 
   return (
     <Card>
