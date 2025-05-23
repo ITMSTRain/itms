@@ -9,6 +9,7 @@ from speed_calculator import SpeedCalculator
 import os
 from dotenv import load_dotenv
 from supabase import create_client
+import datetime
 
 from tracker import Tracker
 
@@ -314,6 +315,23 @@ async def process_video(video_path, speed_calculator, roi, latest_speed_store, w
                                     if id not in counted_ids_PB.get(matched_class_id, set()):
                                         vehicle_classifications_PB[matched_class_id] += 1
                                         counted_ids_PB[matched_class_id].add(id)
+                            # --- NEW: Insert valid speed data into Supabase ---
+                            # Only insert if speed is not zero and class_name is not Unknown
+                            if rounded_speed > 0 and class_name_for_speed != "Unknown":
+                                # Determine camera_id based on video_source
+                                if video_path.lower().endswith("1.mp4"):
+                                    camera_id = 1
+                                elif video_path.lower().endswith("3.mp4"):
+                                    camera_id = 2
+                                else:
+                                    camera_id = 3  # Use 2 for all others as per your logic
+                                # Insert into speed_data
+                                supabase.table("speed_data").insert({
+                                    "created_at": datetime.datetime.utcnow().isoformat(),
+                                    "class_name": class_name_for_speed,
+                                    "speed": rounded_speed,
+                                    "camera_id": camera_id
+                                }).execute()
                         else:
                             display_speed = latest_speed_store.get(id, 0)
                         # Store the last matched_class_id for this id for display

@@ -262,19 +262,25 @@ const CameraSurveillanceDashboard: React.FC = () => {
       const [bsuClassJson, pbClassJson] = await Promise.all([
         bsuClassRes.json(),
         pbClassRes.json(),
-      ]);
-      // Format speed
+      ]); // Format speed
       const getSpeedArr = (json: any, prevArr: any[]) => {
         const speedValues = Object.values(json.latest_speed || {}).map(Number);
+
+        // Use max speed instead of average for better variation visibility
+        const maxSpeed = speedValues.length > 0 ? Math.max(...speedValues) : 0;
         const avgSpeed =
           speedValues.length > 0
             ? speedValues.reduce((a, b) => a + b, 0) / speedValues.length
             : 0;
+
+        // Use max speed as primary indicator
+        const displaySpeed = maxSpeed;
+
         return [
-          ...(prevArr || []).slice(-9),
+          ...(prevArr || []).slice(-4), // Keep only last 5 entries for more responsive chart
           {
             time: new Date().toLocaleTimeString().slice(0, 5),
-            speed: Math.round(avgSpeed * 100) / 100,
+            speed: Math.round(displaySpeed * 100) / 100,
           },
         ];
       };

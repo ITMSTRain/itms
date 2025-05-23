@@ -59,7 +59,7 @@ const MiniSpeedChart: React.FC<MiniSpeedChartProps> = ({
     [key: string]: { time: string; speed: number }[];
   }>({});
 
-  // Use propData if provided, otherwise fallback to local state
+  // Use propData if provided, otherwise fallback to local state (for testing/fallback only)
   const data = propData || dataMap[cameraName] || dummyData;
 
   useEffect(() => {
@@ -79,20 +79,23 @@ const MiniSpeedChart: React.FC<MiniSpeedChartProps> = ({
         const json = await res.json();
         if (json.latest_speed && Object.keys(json.latest_speed).length > 0) {
           const speedValues = Object.values(json.latest_speed).map(Number);
-          const avgSpeed =
-            speedValues.length > 0
-              ? speedValues.reduce((a, b) => a + b, 0) / speedValues.length
-              : 0;
+          // Use full time with seconds for more precise x-axis
+          const now = new Date().toLocaleTimeString();
           setDataMap((prev) => {
             const prevArr = prev[cameraName] || [];
-            const newArr = [
-              ...prevArr.slice(-9),
-              {
-                time: new Date().toLocaleTimeString().slice(0, 5),
-                speed: Math.round(avgSpeed * 100) / 100, // round to 2 decimal places
-              },
-            ];
-            return { ...prev, [cameraName]: newArr };
+            const lastSpeed =
+              prevArr.length > 0
+                ? prevArr[prevArr.length - 1].speed
+                : undefined;
+            const newPoints = speedValues
+              .map((speed) => Math.round(speed * 100) / 100)
+              .filter((speed) => speed !== lastSpeed);
+            if (newPoints.length === 0) return prev;
+            const updatedArr = [
+              ...prevArr,
+              ...newPoints.map((speed) => ({ time: now, speed })),
+            ].slice(-200);
+            return { ...prev, [cameraName]: updatedArr };
           });
         }
       } catch {
@@ -100,7 +103,7 @@ const MiniSpeedChart: React.FC<MiniSpeedChartProps> = ({
       }
     };
     fetchData();
-    const interval = setInterval(fetchData, 10000);
+    const interval = setInterval(fetchData, 5000); // Update every 5 seconds for better responsiveness
     return () => clearInterval(interval);
   }, [cameraName, isActive, propData]);
 
@@ -108,7 +111,9 @@ const MiniSpeedChart: React.FC<MiniSpeedChartProps> = ({
     <Card>
       <CardHeader>
         <CardTitle>Speed Over Time</CardTitle>
-        <CardDescription>Recent speed analytics</CardDescription>
+        <CardDescription>
+          Raw speed values for each polling interval
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>

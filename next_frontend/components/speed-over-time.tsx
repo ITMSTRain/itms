@@ -67,26 +67,40 @@ export default function SpeedOverTime() {
         const data: SpeedDataResponse = await response.json();
 
         console.log("✅ Received data:", data);
-
         if (data.latest_speed && Object.keys(data.latest_speed).length > 0) {
           const speedValues: number[] = Object.values(data.latest_speed).map(
             (speed) => Number(speed)
           );
 
+          // Instead of averaging, let's show the max speed (most representative of current traffic)
+          // and also track individual speeds for better variation
+          const maxSpeed =
+            speedValues.length > 0 ? Math.max(...speedValues) : 0;
+          const minSpeed =
+            speedValues.length > 0 ? Math.min(...speedValues) : 0;
           const avgSpeed =
             speedValues.length > 0
               ? speedValues.reduce((a: number, b: number) => a + b, 0) /
                 speedValues.length
               : 0;
 
-          console.log("📈 Calculated average speed:", avgSpeed);
+          // Use max speed as primary indicator for better variation visibility
+          const displaySpeed = maxSpeed;
+
+          console.log("📈 Speed values:", {
+            speedValues,
+            maxSpeed,
+            minSpeed,
+            avgSpeed,
+            displaySpeed,
+          });
 
           setChartData((prevData) => {
             const newData = [
-              ...prevData.slice(-19), // Keep last 20 entries
+              ...prevData.slice(-9), // Keep only last 10 entries for more responsive chart
               {
                 time: new Date().toLocaleTimeString().slice(0, 5),
-                speed: avgSpeed,
+                speed: Math.round(displaySpeed * 100) / 100,
               },
             ];
             console.log("📉 Updated Chart Data:", newData);
@@ -96,10 +110,8 @@ export default function SpeedOverTime() {
       } catch (error) {
         console.error("❌ Error fetching speed data:", error);
       }
-    };
-
-    // Polling: Fetch data every 3 seconds
-    const interval = setInterval(fetchSpeedData, 60000);
+    }; // Polling: Fetch data every 5 seconds for more responsive updates
+    const interval = setInterval(fetchSpeedData, 5000);
     return () => clearInterval(interval); // Cleanup on unmount
   }, []); // ✅ Runs only once
 
@@ -117,9 +129,12 @@ export default function SpeedOverTime() {
 
         <Card className="border border-gray-400">
           <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
+            {" "}
             <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-              <CardTitle>Bar Chart - Interactive</CardTitle>
-              <CardDescription>Showing real-time speed updates</CardDescription>
+              <CardTitle>Speed Over Time - Live Data</CardTitle>
+              <CardDescription>
+                Showing maximum speeds for better variation visibility
+              </CardDescription>
             </div>
           </CardHeader>
 
