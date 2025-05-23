@@ -36,13 +36,18 @@ export function ClassType() {
 
   const sendPostRequest = async (updatedValues: string[]) => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/update_classes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ vehicle_classes: updatedValues }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/update_classes`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ vehicle_classes: updatedValues }),
+        }
+      );
+      const data = await response.json();
+      console.log("[ClassType] POST /update_classes response:", data);
     } catch (error) {
       console.error("Error sending POST request:", error);
     }

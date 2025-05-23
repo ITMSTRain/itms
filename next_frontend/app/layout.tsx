@@ -6,7 +6,7 @@ import { AuthProvider } from "@/components/auth-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ITMS - Intelligent Traffic Management System",
+  title: "Vision Drive",
   description: "A comprehensive traffic management solution",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL ||

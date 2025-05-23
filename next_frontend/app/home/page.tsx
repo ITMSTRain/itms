@@ -4,6 +4,37 @@ import Header from "@/components/header";
 import Sidebar from "@/components/sidebar";
 import VideoGrid from "@/components/videogrid";
 import { useVideoActions } from "../client-actions";
+import MiniSpeedChart from "@/components/mini-speed-chart";
+import MiniClassChart from "@/components/mini-class-chart";
+
+const SPEED_ENDPOINTS = {
+  bsu: `${process.env.NEXT_PUBLIC_BACKEND_URL}/bsu_latest_speed`,
+  pb: `${process.env.NEXT_PUBLIC_BACKEND_URL}/PB_latest_speed`,
+};
+const CLASS_ENDPOINTS = {
+  bsu: `${process.env.NEXT_PUBLIC_BACKEND_URL}/BSU_vehicle_classifications`,
+  pb: `${process.env.NEXT_PUBLIC_BACKEND_URL}/PB_vehicle_classifications`,
+};
+
+const VEHICLE_TYPES = [
+  "Bus",
+  "Car",
+  "Jeep",
+  "Motorcycle",
+  "Person",
+  "Tricycle",
+  "Truck",
+  "Van",
+];
+
+const dummySpeedData = [
+  { time: "12:00", speed: 0 },
+  { time: "12:01", speed: 0 },
+  { time: "12:02", speed: 0 },
+  { time: "12:03", speed: 0 },
+  { time: "12:04", speed: 0 },
+];
+const dummyClassData = VEHICLE_TYPES.map((type) => ({ type, count: 0 }));
 
 const CameraSurveillanceDashboard: React.FC = () => {
   const [gridSize, setGridSize] = useState<number>(4);
@@ -22,6 +53,11 @@ const CameraSurveillanceDashboard: React.FC = () => {
   const videoRefs = useRef<(HTMLImageElement | null)[]>([]);
   const { fetchVideoNames } = useVideoActions();
   const [isClient, setIsClient] = useState(false);
+  const [videoActive, setVideoActive] = useState<boolean[]>([]);
+  const [analyticsData, setAnalyticsData] = useState({
+    bsu: { speed: dummySpeedData, class: dummyClassData },
+    pb: { speed: dummySpeedData, class: dummyClassData },
+  });
 
   // Only run client-side code after mount
   useEffect(() => {
@@ -165,6 +201,11 @@ const CameraSurveillanceDashboard: React.FC = () => {
     function reconnect() {
       console.log(`🔄 Reconnecting ${cameraName}...`);
       delete activeStreams[cameraName];
+      setVideoActive((prev) => {
+        const arr = [...prev];
+        arr[videoIndex] = false;
+        return arr;
+      });
       setTimeout(() => startStream(cameraName, videoIndex), 3000);
     }
 
@@ -183,14 +224,84 @@ const CameraSurveillanceDashboard: React.FC = () => {
         let imgUrl = URL.createObjectURL(blob);
         imgElement.src = imgUrl;
         imgElement.onload = () => URL.revokeObjectURL(imgUrl);
+        setVideoActive((prev) => {
+          const arr = [...prev];
+          arr[videoIndex] = true;
+          return arr;
+        });
       }
     };
 
     ws.onclose = () => {
       console.warn(`🚨 WebSocket for ${cameraName} closed!`);
+      setVideoActive((prev) => {
+        const arr = [...prev];
+        arr[videoIndex] = false;
+        return arr;
+      });
       reconnect();
     };
   };
+
+  const fetchAnalyticsData = useCallback(async () => {
+    try {
+      // Speed
+      const [bsuSpeedRes, pbSpeedRes] = await Promise.all([
+        fetch(SPEED_ENDPOINTS.bsu),
+        fetch(SPEED_ENDPOINTS.pb),
+      ]);
+      const [bsuSpeedJson, pbSpeedJson] = await Promise.all([
+        bsuSpeedRes.json(),
+        pbSpeedRes.json(),
+      ]);
+      // Class
+      const [bsuClassRes, pbClassRes] = await Promise.all([
+        fetch(CLASS_ENDPOINTS.bsu),
+        fetch(CLASS_ENDPOINTS.pb),
+      ]);
+      const [bsuClassJson, pbClassJson] = await Promise.all([
+        bsuClassRes.json(),
+        pbClassRes.json(),
+      ]);
+      // Format speed
+      const getSpeedArr = (json: any, prevArr: any[]) => {
+        const speedValues = Object.values(json.latest_speed || {}).map(Number);
+        const avgSpeed =
+          speedValues.length > 0
+            ? speedValues.reduce((a, b) => a + b, 0) / speedValues.length
+            : 0;
+        return [
+          ...(prevArr || []).slice(-9),
+          {
+            time: new Date().toLocaleTimeString().slice(0, 5),
+            speed: Math.round(avgSpeed * 100) / 100,
+          },
+        ];
+      };
+      // Format class
+      const getClassArr = (json: any) =>
+        VEHICLE_TYPES.map((type) => ({
+          type,
+          count: json.vehicle_classifications?.[type] || 0,
+        }));
+      setAnalyticsData((prev) => ({
+        bsu: {
+          speed: getSpeedArr(bsuSpeedJson, prev.bsu.speed),
+          class: getClassArr(bsuClassJson),
+        },
+        pb: {
+          speed: getSpeedArr(pbSpeedJson, prev.pb.speed),
+          class: getClassArr(pbClassJson),
+        },
+      }));
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    fetchAnalyticsData();
+    const interval = setInterval(fetchAnalyticsData, 3000);
+    return () => clearInterval(interval);
+  }, [fetchAnalyticsData]);
 
   // Don't render the component during static generation
   if (!isClient) {
@@ -221,7 +332,32 @@ const CameraSurveillanceDashboard: React.FC = () => {
             onVideoClick={handleVideoClick}
             onVideoDoubleClick={handleVideoDoubleClick}
             videoRefs={videoRefs}
+            cameraNames={cameraNames.map((c) => c.name)}
+            videoActive={videoActive}
           />
+          {/* Mini Analytics Charts Example */}
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <MiniSpeedChart
+              cameraName="bsu_road_sample"
+              isActive={true}
+              data={analyticsData.bsu.speed}
+            />
+            <MiniClassChart
+              cameraName="bsu_road_sample"
+              isActive={true}
+              data={analyticsData.bsu.class}
+            />
+            <MiniSpeedChart
+              cameraName="pb_road_sample"
+              isActive={true}
+              data={analyticsData.pb.speed}
+            />
+            <MiniClassChart
+              cameraName="pb_road_sample"
+              isActive={true}
+              data={analyticsData.pb.class}
+            />
+          </div>
         </div>
       </div>
     </div>

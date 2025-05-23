@@ -49,13 +49,9 @@ except json.JSONDecodeError:
 if not isinstance(allowed_origins, list) or not all(isinstance(origin, str) for origin in allowed_origins):
     raise TypeError("ALLOWED_ORIGINS must be a JSON array of strings")
 
-
 app = FastAPI()
 
-
-origins = os.getenv("ALLOWED_ORIGINS", "")
-allowed_origins = [origin.strip() for origin in origins.split(",") if origin.strip()]
-
+# Use allowed_origins directly from JSON parsing
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -67,21 +63,21 @@ app.add_middleware(
 # Load the YOLO model
 model = YOLO(r'..\model_feb\94%.pt')
 
-device = model.device
-print(f"YOLO is running on: {device}")
+# device = model.device
+# print(f"YOLO is running on: {device}")
 
-# # Check for CUDA availability
-# if not torch.cuda.is_available():
-#     print("CUDA is not available.")
-#     device = model.device
-#     print(f"YOLO is running on: {device}")    
+# Check for CUDA availability
+if not torch.cuda.is_available():
+    print("CUDA is not available.")
+    device = model.device
+    print(f"YOLO is running on: {device}")    
    
 
-# else:
-#     print("CUDA is available.")
-#     device = 'cuda'
-#     model.to(device)
-#     print(torch.cuda.get_device_properties(0))
+else:
+    print("CUDA is available.")
+    device = 'cuda'
+    model.to(device)
+    print(torch.cuda.get_device_properties(0))
 
     
 
@@ -93,7 +89,7 @@ allowed_classes = [0, 1, 2, 3, 4, 5, 6, 7]
 
 # Assign a unique color to each class
 class_colors = {
-    0: (255, 0, 0),    # Red for Bus
+    0: (255, 255, 255),    # Red for Bus
     1: (0, 255, 0),    # Green for Car
     2: (0, 0, 255),    # Blue for Jeep
     3: (255, 255, 0),  # Cyan for Motorcycle
@@ -112,7 +108,7 @@ line_color_2 = (255, 0, 0)  # Green line
 line_thickness = 2
 
 # Red and blue lines for BSU
-bsu_red_line_y, bsu_blue_line_y = 180, 100
+bsu_red_line_y, bsu_blue_line_y = 240, 110
 bsu_line_start_1, bsu_line_end_1 = (437, bsu_red_line_y), (570, bsu_red_line_y)
 bsu_line_start_2, bsu_line_end_2 = (427, bsu_blue_line_y), (490, bsu_blue_line_y)
 
@@ -131,6 +127,14 @@ pb_roi = np.array([
     [852, 349],    # Bottom right
     [429, 199],    # Top right
     [275, 197]     # Top left
+])
+
+# Define trapezoidal ROI coordinates
+bsu_roi = np.array([
+    [0, 480],     # Bottom left
+    [854, 480],    # Bottom right
+    [854, 0],    # Top right
+    [0, 0]     # Top left
 ])
 
 tracker = Tracker()
@@ -175,16 +179,20 @@ def get_local_ip():
 
 ip = '127.0.0.1'
 
+SELECTED_CLASSES_FILE = "selected_classes.json"
+
 @app.post("/update_classes")
 async def update_classes(request: ClassUpdateRequest):
-    global selected_classes
     valid_classes = set(request.vehicle_classes) & set(class_names.values())  # Filter valid class names
-
     if valid_classes:
-        selected_classes = valid_classes  # Update the global set
-        return {"message": f"Bounding boxes will be drawn for: {', '.join(selected_classes)}"}
+        # Write to file for all workers to see
+        with open(SELECTED_CLASSES_FILE, "w") as f:
+            json.dump(list(valid_classes), f)
+        return {"message": f"Bounding boxes will be drawn for: {', '.join(valid_classes)}"}
     else:
-        selected_classes = set(class_names.values())
+        # If invalid, write all classes
+        with open(SELECTED_CLASSES_FILE, "w") as f:
+            json.dump(list(class_names.values()), f)
         return {"error": "Invalid class names provided"}
 
 def fetch_videos(video_names):
@@ -200,12 +208,17 @@ def fetch_videos(video_names):
         print("No videos found.")  # Debugging line
         return []
 
-async def process_video(video_path, speed_calculator, latest_speed_store, websocket: WebSocket):
-    """Process a video file or an IP camera stream."""
-    global selected_classes
+# Add sets to keep track of counted IDs for each class
+counted_ids_PB = {class_id: set() for class_id in allowed_classes}
+counted_ids_BSU = {class_id: set() for class_id in allowed_classes}
 
+async def process_video(video_path, speed_calculator, roi, latest_speed_store, websocket: WebSocket):
+    """Process a video file or an IP camera stream."""
     is_ip_camera = video_path.startswith(("rtsp://", "http://", "https://")) 
     display_speed = 0
+    # Per-video state for last nonzero speed/class
+    last_nonzero_speed = 0
+    last_nonzero_class_name = "Unknown"
     while True:  # 🔥 Keep trying until we get a working stream
         cap = cv2.VideoCapture(video_path)
         
@@ -226,6 +239,13 @@ async def process_video(video_path, speed_calculator, latest_speed_store, websoc
 
         try:
             while cap.isOpened():
+                # --- Load selected_classes from file every frame ---
+                try:
+                    with open(SELECTED_CLASSES_FILE, "r") as f:
+                        selected_classes = set(json.load(f))
+                except Exception:
+                    selected_classes = set(class_names.values())
+                # ---
                 ret, frame = cap.read()
                 if not ret:
                     break
@@ -255,47 +275,65 @@ async def process_video(video_path, speed_calculator, latest_speed_store, websoc
                     for bbox, score, class_id in valid_detections:
                         x1, y1, x2, y2 = bbox
                         x1, y1, x2, y2 = int(x1 * og_width / 320), int(y1 * og_height / 320), int(x2 * og_width / 320), int(y2 * og_height / 320)
-
                         # Check if the bounding box center lies inside the trapezoid
                         center_x = (x1 + x2) // 2
                         center_y = (y1 + y2) // 2
-                        if cv2.pointPolygonTest(pb_roi, (center_x, center_y), False) >= 0:
+                        if cv2.pointPolygonTest(roi, (center_x, center_y), False) >= 0:
                             x, y, w, h = x1, y1, x2 - x1, y2 - y1
-                            rects.append([x, y, w, h])
-                            
-                            class_name = class_names.get(int(class_id), "Unknown")
+                            class_name = class_names.get(int(class_id))
                             if class_name in selected_classes:
-                                # Use class-specific color for bounding box and text
-                                color = class_colors.get(int(class_id), (0, 255, 0))  # Default to green if class_id not found
+                                color = class_colors.get(int(class_id), (0, 255, 0))
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-                                label = f"{class_names.get(int(class_id), 'Unknown')} {score:.2f}"
+                                label = f"{class_name} {score:.2f}"
                                 cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
-                        
-
+                            rects.append([x, y, w, h])
                     objects_bbs_ids = tracker.update(rects)
-
                     for obj in objects_bbs_ids:
                         x, y, w, h, id = obj
                         cx, cy = (x + x + w) // 2, (y + y + h) // 2
-
                         speed, entry_time, exit_time = speed_calculator.calculate_speed(cx, cy, id, frame, [x, y, x + w, y + h])
+                        matched_class_id = None
+                        for bbox, score, det_class_id in valid_detections:
+                            bx1, by1, bx2, by2 = bbox
+                            bx1, by1, bx2, by2 = int(bx1 * og_width / 320), int(by1 * og_height / 320), int(bx2 * og_width / 320), int(by2 * og_height / 320)
+                            if abs(bx1 - x) < 10 and abs(by1 - y) < 10 and abs((bx2-bx1) - w) < 10 and abs((by2-by1) - h) < 10:
+                                matched_class_id = int(det_class_id)
+                                break
                         if speed is not None:
                             rounded_speed = round(speed, 2)
                             latest_speed_store[id] = rounded_speed
                             display_speed = rounded_speed
-                            # Check if the vehicle has already crossed the blue line
-                            if class_id in allowed_classes:
-                                if class_id not in crossed_vehicles:  # Only count the vehicle once
-                                    vehicle_classifications_PB[class_id] += 1
+                            # Only count the vehicle if it has a valid speed (i.e., it crossed the line)
+                            # and has not been counted before for this class
+                            if matched_class_id is not None:
+                                if video_path.lower().find("1.mp4") != -1:
+                                    if id not in counted_ids_BSU.get(matched_class_id, set()):
+                                        vehicle_classifications_BSU[matched_class_id] += 1
+                                        counted_ids_BSU[matched_class_id].add(id)
+                                else:
+                                    if id not in counted_ids_PB.get(matched_class_id, set()):
+                                        vehicle_classifications_PB[matched_class_id] += 1
+                                        counted_ids_PB[matched_class_id].add(id)
                         else:
                             display_speed = latest_speed_store.get(id, 0)
-
-                        
-
-
-                class_name = class_names.get(int(class_id), "Unknown")
-                cv2.putText(frame, f"{class_name} Speed: {display_speed:.2f} km/h", 
-                            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                        # Store the last matched_class_id for this id for display
+                        latest_class_id_for_id = matched_class_id
+                    # After the loop, use the last matched_class_id for display
+                    class_name_for_speed = class_names.get(latest_class_id_for_id, "Unknown") if 'latest_class_id_for_id' in locals() and latest_class_id_for_id is not None else "Unknown"
+                    # Only update display_speed_text and class_name if display_speed is not 0
+                    if display_speed != 0:
+                        last_nonzero_speed = display_speed
+                        last_nonzero_class_name = class_name_for_speed
+                    display_speed_text = last_nonzero_speed if last_nonzero_speed != 0 else 0
+                    display_class_name = last_nonzero_class_name if last_nonzero_speed != 0 else "Unknown"
+                    cv2.putText(frame, f"{display_class_name} Speed: {display_speed_text:.2f} km/h", 
+                                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                else:
+                    # No detections: keep showing last valid speed/class name
+                    display_speed_text = last_nonzero_speed if last_nonzero_speed != 0 else 0
+                    display_class_name = last_nonzero_class_name if last_nonzero_speed != 0 else "Unknown"
+                    cv2.putText(frame, f"{display_class_name} Speed: {display_speed_text:.2f} km/h", 
+                                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
                 small_frame = cv2.resize(frame, (480, 320))
                 _, encoded_image = cv2.imencode('.jpg', small_frame)
@@ -326,12 +364,17 @@ async def websocket_stream(websocket: WebSocket, video_name: str):
 
     video_path = video_data[0]["video_source"]
 
-    if video_name == "bsu_road":
+    if video_name == "bsu_road_sample":
         speed_calc = bsu_speed_calculator
         latest_speed = latest_speed_bsu
     else:
         speed_calc = PB_speed_calculator
         latest_speed = latest_speed_PB
+
+    if video_name == "pb_road_sample":
+        roi = pb_roi
+    else:
+        roi = bsu_roi
 
     # Prevent multiple restarts by checking if a task exists
     if video_name in active_streams:
@@ -339,7 +382,7 @@ async def websocket_stream(websocket: WebSocket, video_name: str):
         return
 
     # Run video processing in a new task (NON-BLOCKING)
-    task = asyncio.create_task(process_video(video_path, speed_calc, latest_speed, websocket))
+    task = asyncio.create_task(process_video(video_path, speed_calc, roi, latest_speed, websocket))
     
     # Keep track of active streams
     active_streams[video_name] = task
@@ -412,3 +455,5 @@ if __name__ == "__main__":
     # Run the server in a separate thread
     server_thread = threading.Thread(target=start_server)
     server_thread.start()
+
+

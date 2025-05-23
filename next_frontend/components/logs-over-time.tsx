@@ -31,7 +31,8 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
 
 // API URL for HTTP polling
-const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL!}/PB_vehicle_classifications`; // ✅ Fetch vehicle classifications
+const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL!}/PB_vehicle_classifications`;
+const API_URL2 = `${process.env.NEXT_PUBLIC_BACKEND_URL!}/BSU_vehicle_classifications`;
 
 const vehicleChartConfig = {
   Bus: { label: "Bus", color: "hsl(var(--chart-1))" },

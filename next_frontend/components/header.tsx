@@ -83,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({
     <header className="bg-[#EFF6FF] shadow-md p-4">
       <div className="flex items-center justify-between">
         <img
-          //Vision-Drive.png"
+          src="/Vision-Drive.png"
           alt="Vision Drive Logo"
           className="h-16 object-contain"
         />
@@ -129,6 +129,13 @@ const Header: React.FC<HeaderProps> = ({
                   onClick={() => navigateTo("/user-guide")}
                 >
                   User Guide
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigateTo("/dashboard")}
+                >
+                  Dashboard
                 </Button>
                 <Button
                   variant="outline"

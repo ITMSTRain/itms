@@ -31,7 +31,8 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
 
 // API URL for HTTP polling
-const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/PB_latest_speed`; // ✅ Ensure this matches your backend
+const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/PB_latest_speed`;
+const API_URL2 = `${process.env.NEXT_PUBLIC_BACKEND_URL}/bsu_latest_speed`;
 
 const chartConfig = {
   speed: {
