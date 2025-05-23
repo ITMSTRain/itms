@@ -29,10 +29,10 @@ import {
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
+import { createClient } from "../utils/supabase/client";
 
-// API URL for HTTP polling
-const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/PB_latest_speed`;
-const API_URL2 = `${process.env.NEXT_PUBLIC_BACKEND_URL}/bsu_latest_speed`;
+// Supabase client
+const supabase = createClient();
 
 const chartConfig = {
   speed: {
@@ -58,61 +58,28 @@ export default function SpeedOverTime() {
 
   React.useEffect(() => {
     const fetchSpeedData = async () => {
-      try {
-        console.log("🔄 Fetching speed data...");
-        const response = await fetch(API_URL);
-
-        if (!response.ok) throw new Error("❌ Failed to fetch speed data");
-
-        const data: SpeedDataResponse = await response.json();
-
-        console.log("✅ Received data:", data);
-        if (data.latest_speed && Object.keys(data.latest_speed).length > 0) {
-          const speedValues: number[] = Object.values(data.latest_speed).map(
-            (speed) => Number(speed)
-          );
-
-          // Instead of averaging, let's show the max speed (most representative of current traffic)
-          // and also track individual speeds for better variation
-          const maxSpeed =
-            speedValues.length > 0 ? Math.max(...speedValues) : 0;
-          const minSpeed =
-            speedValues.length > 0 ? Math.min(...speedValues) : 0;
-          const avgSpeed =
-            speedValues.length > 0
-              ? speedValues.reduce((a: number, b: number) => a + b, 0) /
-                speedValues.length
-              : 0;
-
-          // Use max speed as primary indicator for better variation visibility
-          const displaySpeed = maxSpeed;
-
-          console.log("📈 Speed values:", {
-            speedValues,
-            maxSpeed,
-            minSpeed,
-            avgSpeed,
-            displaySpeed,
-          });
-
-          setChartData((prevData) => {
-            const newData = [
-              ...prevData.slice(-9), // Keep only last 10 entries for more responsive chart
-              {
-                time: new Date().toLocaleTimeString().slice(0, 5),
-                speed: Math.round(displaySpeed * 100) / 100,
-              },
-            ];
-            console.log("📉 Updated Chart Data:", newData);
-            return newData;
-          });
-        }
-      } catch (error) {
-        console.error("❌ Error fetching speed data:", error);
+      // Query the latest 15 speed_data entries, sorted by created_at descending
+      const { data: speedRows, error } = await supabase
+        .from("speed_data")
+        .select("speed,created_at")
+        .order("created_at", { ascending: false })
+        .limit(15);
+      if (error) {
+        setChartData([]);
+        return;
       }
-    }; // Polling: Fetch data every 5 seconds for more responsive updates
-    const interval = setInterval(fetchSpeedData, 5000);
-    return () => clearInterval(interval); // Cleanup on unmount
+      if (speedRows && speedRows.length > 0) {
+        // Reverse to get oldest first for chart
+        const chartData = speedRows.reverse().map((row: any) => ({
+          time: new Date(row.created_at).toLocaleTimeString(),
+          speed: Math.round(row.speed * 100) / 100,
+        }));
+        setChartData(chartData);
+      }
+    };
+    fetchSpeedData();
+    const interval = setInterval(fetchSpeedData, 10000); // Update every 10 seconds
+    return () => clearInterval(interval);
   }, []); // ✅ Runs only once
 
   return (

@@ -433,25 +433,6 @@ async def bsu_vehicle_classifications():
     return JSONResponse(content=response_data)
 
 
-
-@app.get("/PB_latest_speed")
-async def PB_latest_speed():
-    """Return latest speed data and crossed IDs for PB video feed."""
-    response_data = {
-        "latest_speed": latest_speed_PB,
-        "vehicle_count": unique_vehicle_count_PB[0]
-    }
-    return JSONResponse(content=response_data)
-
-
-@app.get("/bsu_latest_speed")
-async def bsu_latest_speed():
-    """Return latest speed data and crossed IDs for BSU video feed."""
-    response_data = {
-        "latest_speed": latest_speed_bsu,
-        "vehicle_count": unique_vehicle_count_BSU[0]
-    }
-    return JSONResponse(content=response_data)
 @app.get("/favicon.ico", include_in_schema=False)
 async   def favicon():
     favicon_path = os.path.join("WebServer", "favicon.ico")
