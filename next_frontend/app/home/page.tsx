@@ -375,21 +375,6 @@ const CameraSurveillanceDashboard: React.FC = () => {
             videoActive={videoActive}
             miniSpeedData={miniSpeedData}
           />
-          {/* Mini Analytics Charts Example */}
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <MiniSpeedChart cameraName="bsu_road_sample" isActive={true} />
-            <MiniClassChart
-              cameraName="bsu_road_sample"
-              isActive={true}
-              data={analyticsData.bsu.class}
-            />
-            <MiniSpeedChart cameraName="pb_road_sample" isActive={true} />
-            <MiniClassChart
-              cameraName="pb_road_sample"
-              isActive={true}
-              data={analyticsData.pb.class}
-            />
-          </div>
         </div>
       </div>
     </div>
